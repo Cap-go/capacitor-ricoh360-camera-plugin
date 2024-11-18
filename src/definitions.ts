@@ -8,9 +8,10 @@ export interface PictureCaptureOptions {
 
 export interface VideoCaptureOptions {
   // to be implemented
+  language: string
 }
 
-export interface Ricoh360CameraPluginPlugin {
+export interface Ricoh360CameraPlugin {
   /**
    * Initializes the SDK 
    */
