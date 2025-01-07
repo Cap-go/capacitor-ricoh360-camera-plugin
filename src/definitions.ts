@@ -1,5 +1,9 @@
 export interface InitializeOptions {
-  cameraUrl: String
+  cameraUrl: string,
+  language?: 'en-US' | 'en-GB' | 'ja' | 'fr' | 'de' | 'zh-TW' | 'zh-CN' | 'it' | 'ko'
+  setDateTime?: boolean,
+  sleepDelay?: number,
+  shutterSound?: number
 }
 
 export interface PictureCaptureOptions {
@@ -8,7 +12,6 @@ export interface PictureCaptureOptions {
 
 export interface VideoCaptureOptions {
   // to be implemented
-  language: string
 }
 
 export interface Ricoh360CameraPlugin {
@@ -20,4 +23,12 @@ export interface Ricoh360CameraPlugin {
   capturePicture(options: PictureCaptureOptions): Promise<void>
 
   captureVideo(options: VideoCaptureOptions): Promise<void>
+
+  livePreview(): Promise<void>
+
+  stopLivePreview(): Promise<void>
 }
+
+// interface LivePreviewResult {
+//   frame: string; // Base64 encoded JPEG frame
+// }
