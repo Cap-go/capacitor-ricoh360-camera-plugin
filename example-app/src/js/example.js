@@ -1,8 +1,10 @@
 import { Ricoh360Camera } from 'richon360-camera';
 
-async function getCameraSizes() {
+async function openCamera() {
+    const ip = document.getElementById("ipInput").value
+    console.log(`http://${ip}`)
     const sizes =  await Ricoh360Camera
-    .initialize({ language: 'en-US', cameraUrl: 'http://192.168.1.1:3000' })
+    .initialize({ language: 'en-US', cameraUrl: `http://${ip}` })
     .catch(e => {
         console.log(e)
     })
@@ -12,11 +14,14 @@ async function getCameraSizes() {
     .catch(e => {
         console.log(e)
     })
+
   }
 
 window.testCamera = () => {
-    // const inputValue = document.getElementById("echoInput").value;
-    // Ricoh360Camera.echo({ value: inputValue })
-    getCameraSizes()
+    openCamera().then(() => {
+        console.log("Camera opened")
+    }).catch(e => {
+        console.log(e)
+    })
 }
 
