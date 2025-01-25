@@ -1,3 +1,0 @@
-[submodule "submodules/theta-client"]
-	path = submodules/theta-client
-	url = https://github.com/ricohapi/theta-client.git
