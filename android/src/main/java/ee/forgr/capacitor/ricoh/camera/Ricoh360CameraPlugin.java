@@ -218,18 +218,96 @@ public class Ricoh360CameraPlugin extends Plugin {
         }
     }
 
+    @PluginMethod
+    public void readSettings(PluginCall call) {
+        try {
+            JSObject data = call.getData();
+            String jsonInputString = String.format(
+                "{\"name\": \"camera.getOptions\", \"parameters\": {\"optionNames\": %s}}",
+                data.getJSONArray("options").toString()
+            );
+            android.util.Log.d("Ricoh360Camera", "Request body: " + jsonInputString);
+            String settingsUrl = cameraUrl + "/osc/commands/execute";
+
+            HttpURLConnection connection = createConnection(settingsUrl, jsonInputString);
+            int responseCode = connection.getResponseCode();
+            android.util.Log.d("Ricoh360Camera", "Response code: " + responseCode);
+            
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                InputStream inputStream = connection.getInputStream();
+                String result = new BufferedReader(new InputStreamReader(inputStream))
+                    .lines().collect(Collectors.joining("\n"));
+                android.util.Log.d("Ricoh360Camera", "Response body: " + result);
+                
+                // Parse the response to get just the options object
+                JSObject response = new JSObject(result);
+                String options = response.getJSONObject("results").getJSONObject("options").toString();
+                call.resolve(new JSObject(options));
+            } else {
+                InputStream errorStream = connection.getErrorStream();
+                String error = new BufferedReader(new InputStreamReader(errorStream))
+                    .lines().collect(Collectors.joining("\n"));
+                android.util.Log.e("Ricoh360Camera", "Error response: " + error);
+                call.reject("Failed to read settings: " + error);
+            }
+        } catch (Exception e) {
+            android.util.Log.e("Ricoh360Camera", "Exception: " + e.getMessage(), e);
+            call.reject("Failed to read settings: " + e.getMessage(), e);
+        }
+    }
+
+    @PluginMethod
+    public void setSettings(PluginCall call) {
+        try {
+            JSObject data = call.getData();
+            JSObject options = data.getJSObject("options");
+            String jsonInputString = String.format(
+                "{\"name\": \"camera.setOptions\", \"parameters\": {\"options\": %s}}",
+                options.toString()
+            );
+            android.util.Log.d("Ricoh360Camera", "Request body: " + jsonInputString);
+            String settingsUrl = cameraUrl + "/osc/commands/execute";
+
+            HttpURLConnection connection = createConnection(settingsUrl, jsonInputString);
+            int responseCode = connection.getResponseCode();
+            android.util.Log.d("Ricoh360Camera", "Response code: " + responseCode);
+            
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                InputStream inputStream = connection.getInputStream();
+                String result = new BufferedReader(new InputStreamReader(inputStream))
+                    .lines().collect(Collectors.joining("\n"));
+                android.util.Log.d("Ricoh360Camera", "Response body: " + result);
+                call.resolve(new JSObject().put("settings", result));
+            } else {
+                InputStream errorStream = connection.getErrorStream();
+                String error = new BufferedReader(new InputStreamReader(errorStream))
+                    .lines().collect(Collectors.joining("\n"));
+                android.util.Log.e("Ricoh360Camera", "Error response: " + error);
+                call.reject("Failed to set settings: " + error);
+            }
+        } catch (Exception e) {
+            android.util.Log.e("Ricoh360Camera", "Exception: " + e.getMessage(), e);
+            call.reject("Failed to set settings: " + e.getMessage(), e);
+        }
+    }
+
     private HttpURLConnection createConnection(String urlString, String jsonInputString) throws Exception {
         URL url = new URL(urlString);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json; utf-8");
+        connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
         connection.setRequestProperty("Accept", "application/json");
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
+        connection.setDoInput(true);
         connection.setDoOutput(true);
+        connection.setUseCaches(false);
 
-        try (OutputStream os = connection.getOutputStream()) {
-            byte[] input = jsonInputString.getBytes("utf-8");
-            os.write(input, 0, input.length);
-        }
+        OutputStream os = connection.getOutputStream();
+        byte[] input = jsonInputString.getBytes("utf-8");
+        os.write(input);
+        os.flush();
+        os.close();
 
         return connection;
     }

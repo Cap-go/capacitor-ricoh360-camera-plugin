@@ -9,6 +9,7 @@ async function openCamera() {
         document.getElementById('mainContent').style.display = 'none'
         document.getElementById('cameraPreview').style.display = 'block'
         await Ricoh360Camera.livePreview({ displayInFront: false })
+        console.log("Camera opened")
     } catch (e) {
         console.error(e)
     }
@@ -35,7 +36,49 @@ async function takePicture() {
     }
 }
 
+async function readSettings() {
+    try {
+        const optionsToRead = [
+            "iso",
+            "shutterSpeed",
+            "whiteBalance",
+            "exposureProgram",
+            "exposureCompensation",
+            "fileFormat"
+        ]
+        const result = await Ricoh360Camera.readSettings({ options: optionsToRead })
+        document.getElementById('settingsValue').textContent = JSON.stringify(result, null, 2)
+    } catch (e) {
+        console.error(e)
+        document.getElementById('settingsValue').textContent = `Error: ${e.message}`
+    }
+}
+
+async function setSettings() {
+    try {
+        const settings = {
+            iso: 100,
+            shutterSpeed: 0.01,
+            whiteBalance: 'auto',
+            exposureProgram: 2, // Normal program
+            exposureCompensation: 0.0,
+            fileFormat: {
+                type: 'jpeg',
+                width: 5376,
+                height: 2688
+            }
+        }
+        const result = await Ricoh360Camera.setSettings({ options: settings })
+        document.getElementById('settingsValue').textContent = JSON.stringify(result, null, 2)
+    } catch (e) {
+        console.error(e)
+        document.getElementById('settingsValue').textContent = `Error: ${e.message}`
+    }
+}
+
 window.openCamera = openCamera
 window.closeCamera = closeCamera
 window.takePicture = takePicture
+window.readSettings = readSettings
+window.setSettings = setSettings
 

@@ -1,9 +1,5 @@
 export interface InitializeOptions {
-  cameraUrl: string,
-  language?: 'en-US' | 'en-GB' | 'ja' | 'fr' | 'de' | 'zh-TW' | 'zh-CN' | 'it' | 'ko'
-  setDateTime?: boolean,
-  sleepDelay?: number,
-  shutterSound?: number
+  url: string
 }
 
 export interface PictureCaptureOptions {
@@ -42,26 +38,29 @@ export interface CameraInfo {
   apiLevel: number[];
 }
 
+export interface CameraSettings {
+  iso?: number;
+  shutterSpeed?: number;
+}
+
 export interface CommandResponse {
-  name: string;
-  state: string;
-  results?: any; // Use specific types if known
-  error?: {
-    code: string;
-    message: string;
-  };
+  session?: string;
+  info?: string;
+  preview?: string;
+  picture?: string;
+  settings?: string;
 }
 
 export interface Ricoh360CameraPlugin {
   /**
-   * Initializes the SDK 
+   * Initializes the SDK with camera URL
    */
-  initialize(options: InitializeOptions): Promise<CameraInfo>
+  initialize(options: InitializeOptions): Promise<CommandResponse>
 
   /**
    * Captures a picture
    */
-  capturePicture(options: PictureCaptureOptions): Promise<CommandResponse>
+  capturePicture(): Promise<CommandResponse>
 
   /**
    * Captures a video
@@ -71,22 +70,26 @@ export interface Ricoh360CameraPlugin {
   /**
    * Starts live preview
    */
-  livePreview(options: LivePreviewOptions): Promise<void>
+  livePreview(options: LivePreviewOptions): Promise<CommandResponse>
 
   /**
    * Stops live preview
    */
-  stopLivePreview(): Promise<void>
+  stopLivePreview(): Promise<CommandResponse>
 
   /**
    * Reads camera settings
+   * @param options Array of option names to read from camera
+   * @see https://github.com/ricohapi/theta-api-specs/tree/main/theta-web-api-v2.1/options
    */
-  readSettings(): Promise<CommandResponse>
+  readSettings(options: { options: string[] }): Promise<CommandResponse>
 
   /**
    * Sets camera settings
+   * @param options Object containing camera settings to set
+   * @see https://github.com/ricohapi/theta-api-specs/tree/main/theta-web-api-v2.1/options
    */
-  setSettings(options: any): Promise<CommandResponse>
+  setSettings(options: { options: Record<string, any> }): Promise<CommandResponse>
 }
 
 // interface LivePreviewResult {
