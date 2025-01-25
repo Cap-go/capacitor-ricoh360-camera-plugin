@@ -2,15 +2,16 @@
 import PackageDescription
 
 let package = Package(
-    name: "Richon360Camera",
+    name: "Ricoh360Camera",
     platforms: [.iOS(.v13)],
     products: [
         .library(
-            name: "Richon360Camera",
+            name: "Ricoh360Camera",
             targets: ["Ricoh360CameraPlugin"])
     ],
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", branch: "main"),
+        .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.10.2")
     ],
     targets: [
         .target(
@@ -18,16 +19,12 @@ let package = Package(
             dependencies: [
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "Cordova", package: "capacitor-swift-pm"),
-                .product(name: "THETAClient")
+                "Alamofire"
             ],
             path: "ios/Sources/Ricoh360CameraPlugin"),
         .testTarget(
             name: "Ricoh360CameraPluginTests",
             dependencies: ["Ricoh360CameraPlugin"],
             path: "ios/Tests/Ricoh360CameraPluginTests")
-        .binaryTarget(
-            name: "THETAClient",
-            path: "submodules/theta-client/kotlin-multiplatform/build/cocoapods/publish/release/THETAClient.xcframework",
-        )
     ]
 )

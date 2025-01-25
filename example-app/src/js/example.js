@@ -1,27 +1,41 @@
-import { Ricoh360Camera } from 'richon360-camera';
+import { Ricoh360Camera } from 'ricoh360-camera';
 
 async function openCamera() {
     const ip = document.getElementById("ipInput").value
-    console.log(`http://${ip}`)
-    const sizes =  await Ricoh360Camera
-    .initialize({ language: 'en-US', cameraUrl: `http://${ip}` })
-    .catch(e => {
-        console.log(e)
-    })
-    console.log(sizes)
-    await Ricoh360Camera
-    .livePreview()
-    .catch(e => {
-        console.log(e)
-    })
-
-  }
-
-window.testCamera = () => {
-    openCamera().then(() => {
-        console.log("Camera opened")
-    }).catch(e => {
-        console.log(e)
-    })
+    try {
+        await Ricoh360Camera.initialize({
+            url: `http://${ip}`
+        })
+        document.getElementById('mainContent').style.display = 'none'
+        document.getElementById('cameraPreview').style.display = 'block'
+        await Ricoh360Camera.livePreview({ displayInFront: false })
+    } catch (e) {
+        console.error(e)
+    }
 }
+
+async function closeCamera() {
+    try {
+        await Ricoh360Camera.stopLivePreview()
+        document.getElementById('cameraPreview').style.display = 'none'
+        document.getElementById('mainContent').style.display = 'block'
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+async function takePicture() {
+    try {
+        const result = await Ricoh360Camera.capturePicture()
+        if (result?.picture?.results?.fileUrl) {
+            document.getElementById('lastPicture').src = result.picture.results.fileUrl
+        }
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+window.openCamera = openCamera
+window.closeCamera = closeCamera
+window.takePicture = takePicture
 

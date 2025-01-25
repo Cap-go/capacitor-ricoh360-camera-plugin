@@ -5,5 +5,5 @@ project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/
 include ':capacitor-splash-screen'
 project(':capacitor-splash-screen').projectDir = new File('../node_modules/@capacitor/splash-screen/android')
 
-include ':richon360-camera'
-project(':richon360-camera').projectDir = new File('../../android')
+include ':ricoh360-camera'
+project(':ricoh360-camera').projectDir = new File('../../android')

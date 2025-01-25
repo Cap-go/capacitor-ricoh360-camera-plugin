@@ -5,7 +5,7 @@ def capacitor_pods
   use_frameworks!
   pod 'Capacitor', :path => '../node_modules/@capacitor/ios'
   pod 'CapacitorCordova', :path => '../node_modules/@capacitor/ios'
-  pod 'THETAClient', :path => '../submodules/theta-client/kotlin-multiplatform/build/cocoapods/publish/release/'
+  pod 'Alamofire', '~> 5.10.2'
 end
 
 target 'Plugin' do

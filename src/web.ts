@@ -1,21 +1,33 @@
 import { WebPlugin } from '@capacitor/core';
 
-import type { InitializeOptions, PictureCaptureOptions, Ricoh360CameraPlugin, VideoCaptureOptions } from './definitions';
+import type { InitializeOptions, PictureCaptureOptions, VideoCaptureOptions, LivePreviewOptions, Ricoh360CameraPlugin, CommandResponse, CameraInfo } from './definitions';
 
 export class Ricoh360CameraWeb extends WebPlugin implements Ricoh360CameraPlugin {
-  livePreview(): Promise<void> {
-    throw new Error('Method not implemented.');
+  async initialize(_options: InitializeOptions): Promise<CameraInfo> {
+    throw new Error('Web implementation not available for initialize.');
   }
-  stopLivePreview(): Promise<void> {
-    throw new Error('Method not implemented.');
+
+  async capturePicture(_options: PictureCaptureOptions): Promise<CommandResponse> {
+    throw new Error('Web implementation not available for capturePicture.');
   }
-  initialize(_options: InitializeOptions): Promise<void> {
-    throw new Error('Method not implemented.');
+
+  async captureVideo(_options: VideoCaptureOptions): Promise<CommandResponse> {
+    throw new Error('Web implementation not available for captureVideo.');
   }
-  capturePicture(_options: PictureCaptureOptions): Promise<void> {
-    throw new Error('Method not implemented.');
+
+  async livePreview(_options: LivePreviewOptions): Promise<void> {
+    throw new Error('Web implementation not available for livePreview.');
   }
-  captureVideo(_options: VideoCaptureOptions): Promise<void> {
-    throw new Error('Method not implemented.');
+
+  async stopLivePreview(): Promise<void> {
+    throw new Error('Web implementation not available for stopLivePreview.');
+  }
+
+  async readSettings(): Promise<CommandResponse> {
+    throw new Error('Web implementation not available for readSettings.');
+  }
+
+  async setSettings(_options: any): Promise<CommandResponse> {
+    throw new Error('Web implementation not available for setSettings.');
   }
 }
