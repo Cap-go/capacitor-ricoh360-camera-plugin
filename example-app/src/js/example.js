@@ -76,9 +76,28 @@ async function setSettings() {
     }
 }
 
+async function sendCommand() {
+    try {
+        const result = await Ricoh360Camera.sendCommand({
+            endpoint: '/osc/commands/execute',
+            payload: {
+                name: "camera.getOptions",
+                parameters: {
+                    optionNames: ["shutterSpeed", "iso"]
+                }
+            }
+        })
+        document.getElementById('settingsValue').textContent = JSON.stringify(result, null, 2)
+    } catch (e) {
+        console.error(e)
+        document.getElementById('settingsValue').textContent = `Error: ${e.message}`
+    }
+}
+
 window.openCamera = openCamera
 window.closeCamera = closeCamera
 window.takePicture = takePicture
 window.readSettings = readSettings
 window.setSettings = setSettings
+window.sendCommand = sendCommand
 

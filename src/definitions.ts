@@ -90,6 +90,13 @@ export interface Ricoh360CameraPlugin {
    * @see https://github.com/ricohapi/theta-api-specs/tree/main/theta-web-api-v2.1/options
    */
   setSettings(options: { options: Record<string, any> }): Promise<CommandResponse>
+
+  /**
+   * Send raw command to camera
+   * @param endpoint API endpoint (e.g. '/osc/commands/execute')
+   * @param payload Raw JSON payload
+   */
+  sendCommand(options: { endpoint: string; payload: Record<string, any> }): Promise<CommandResponse>
 }
 
 // interface LivePreviewResult {

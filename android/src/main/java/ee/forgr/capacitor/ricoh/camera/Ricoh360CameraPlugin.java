@@ -291,6 +291,43 @@ public class Ricoh360CameraPlugin extends Plugin {
         }
     }
 
+    @PluginMethod
+    public void sendCommand(PluginCall call) {
+        try {
+            String endpoint = call.getString("endpoint");
+            JSObject payload = call.getObject("payload");
+            if (endpoint == null || payload == null) {
+                call.reject("Endpoint and payload are required");
+                return;
+            }
+
+            String commandUrl = cameraUrl + endpoint;
+            String jsonInputString = call.getData().getJSONObject("payload").toString();
+            android.util.Log.d("Ricoh360Camera", "Request body: " + jsonInputString);
+
+            HttpURLConnection connection = createConnection(commandUrl, jsonInputString);
+            int responseCode = connection.getResponseCode();
+            android.util.Log.d("Ricoh360Camera", "Response code: " + responseCode);
+            
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                InputStream inputStream = connection.getInputStream();
+                String result = new BufferedReader(new InputStreamReader(inputStream))
+                    .lines().collect(Collectors.joining("\n"));
+                android.util.Log.d("Ricoh360Camera", "Response body: " + result);
+                call.resolve(new JSObject(result));
+            } else {
+                InputStream errorStream = connection.getErrorStream();
+                String error = new BufferedReader(new InputStreamReader(errorStream))
+                    .lines().collect(Collectors.joining("\n"));
+                android.util.Log.e("Ricoh360Camera", "Error response: " + error);
+                call.reject("Command failed: " + error);
+            }
+        } catch (Exception e) {
+            android.util.Log.e("Ricoh360Camera", "Exception: " + e.getMessage(), e);
+            call.reject("Command failed: " + e.getMessage(), e);
+        }
+    }
+
     private HttpURLConnection createConnection(String urlString, String jsonInputString) throws Exception {
         URL url = new URL(urlString);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
