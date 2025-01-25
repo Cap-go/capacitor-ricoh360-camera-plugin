@@ -57,16 +57,16 @@ async function readSettings() {
 async function setSettings() {
     try {
         const settings = {
-            iso: 100,
-            shutterSpeed: 0.01,
-            whiteBalance: 'auto',
-            exposureProgram: 2, // Normal program
-            exposureCompensation: 0.0,
-            fileFormat: {
-                type: 'jpeg',
-                width: 5376,
-                height: 2688
-            }
+            iso: 200,
+            // shutterSpeed: 0.01,
+            // whiteBalance: 'auto',
+            // exposureProgram: 2, // Normal program
+            // exposureCompensation: 0.0,
+            // "fileFormat": {
+            //     "type": "jpeg",
+            //     "width": 2048,
+            //     "height": 1024
+            // }
         }
         const result = await Ricoh360Camera.setSettings({ options: settings })
         document.getElementById('settingsValue').textContent = JSON.stringify(result, null, 2)
