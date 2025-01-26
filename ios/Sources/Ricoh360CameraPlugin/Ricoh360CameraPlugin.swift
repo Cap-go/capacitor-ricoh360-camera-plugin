@@ -20,6 +20,7 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
         CAPPluginMethod(name: "livePreview", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "stopLivePreview", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "captureVideo", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "sendCommand", returnType: CAPPluginReturnPromise),
     ]
 
     private var previewView: UIImageView?
@@ -226,11 +227,11 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
                     }
                 }
             }
-            
+
             let url = URL(string: "\(self.cameraUrl)/osc/commands/execute")!
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
-            
+
             self.httpStream = HttpStream(request: request)
             self.httpStream?.startLivePreview { [weak self] (image: UIImage?, error: Error?) in
                 guard let self = self else { return }
@@ -249,15 +250,21 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
             self.httpStream?.stopLivePreview()
             self.previewView?.removeFromSuperview()
             self.previewView = nil
+            
+            // Revert webview transparency
+            self.webView?.isOpaque = true
+            self.webView?.backgroundColor = .white
+            self.webView?.scrollView.backgroundColor = .white
+            
+            call.resolve(["preview": "Stopped"])
         }
-        call.resolve(["preview": "Stopped"])
     }
 
     @objc func capturePicture(_ call: CAPPluginCall) {
         let parameters: [String: Any] = ["name": "camera.takePicture"]
         let captureUrl = "\(cameraUrl)/osc/commands/execute"
         print("Capturing picture with URL: \(captureUrl)")
-
+        
         AF.request(captureUrl, method: .post, parameters: parameters, encoding: JSONEncoding.default).responseDecodable(of: CommandResponse.self) { response in
             switch response.result {
             case .success(let value):
@@ -271,55 +278,176 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
     }
 
     @objc func readSettings(_ call: CAPPluginCall) {
-        let parameters: [String: Any] = ["name": "camera.getOptions", "parameters": ["optionNames": ["iso", "shutterSpeed"]]]
-        let settingsUrl = "\(cameraUrl)/osc/commands/execute"
-        print("Reading settings with URL: \(settingsUrl)")
-
-        AF.request(settingsUrl, method: .post, parameters: parameters, encoding: JSONEncoding.default).responseDecodable(of: CommandResponse.self) { response in
-            switch response.result {
-            case .success(let value):
-                print("Settings read: \(value)")
-                call.resolve(["settings": value])
-            case .failure(let error):
-                print("Failed to read settings: \(error.localizedDescription)")
-                call.reject("Failed to read settings", error.localizedDescription)
-            }
-        }
-    }
-
-    @objc func setSettings(_ call: CAPPluginCall) {
-        guard let options = call.getObject("options") else {
-            print("Options not provided for setting settings")
-            call.reject("Options not provided")
+        guard let data = call.options,
+              let jsonData = try? JSONSerialization.data(withJSONObject: data),
+              let options = String(data: jsonData, encoding: .utf8) else {
+            call.reject("Invalid options")
             return
         }
         
-        let parameters: [String: Any] = ["name": "camera.setOptions", "parameters": ["options": options]]
-        let settingsUrl = "\(cameraUrl)/osc/commands/execute"
-        print("Setting settings with URL: \(settingsUrl) and options: \(options)")
-
-        AF.request(settingsUrl, method: .post, parameters: parameters, encoding: JSONEncoding.default).responseDecodable(of: CommandResponse.self) { response in
-            switch response.result {
-            case .success(let value):
-                print("Settings updated: \(value)")
-                call.resolve(["result": value])
-            case .failure(let error):
-                print("Failed to set settings: \(error.localizedDescription)")
-                call.reject("Failed to set settings", error.localizedDescription)
+        let jsonInputString = """
+        {"name": "camera.getOptions", "parameters": {"optionNames": \(options)}}
+        """
+        
+        guard let url = URL(string: cameraUrl + "/osc/commands/execute") else {
+            call.reject("Invalid URL")
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = jsonInputString.data(using: .utf8)
+        
+        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if let error = error {
+                call.reject("Failed to read settings", error.localizedDescription)
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  let data = data else {
+                call.reject("Failed to read settings")
+                return
+            }
+            
+            if httpResponse.statusCode == 200 {
+                do {
+                    let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+                    if let results = json?["results"] as? [String: Any],
+                       let options = results["options"] as? [String: Any],
+                       let optionsData = try? JSONSerialization.data(withJSONObject: options),
+                       let optionsString = String(data: optionsData, encoding: .utf8) {
+                        call.resolve(["settings": optionsString])
+                    } else {
+                        call.reject("Failed to parse settings response")
+                    }
+                } catch {
+                    call.reject("Failed to parse settings response", error.localizedDescription)
+                }
+            } else {
+                if let error = String(data: data, encoding: .utf8) {
+                    call.reject("Failed to read settings: \(error)")
+                } else {
+                    call.reject("Failed to read settings")
+                }
             }
         }
+        task.resume()
+    }
+
+    @objc func setSettings(_ call: CAPPluginCall) {
+        guard let data = call.options,
+              let jsonData = try? JSONSerialization.data(withJSONObject: data),
+              let options = String(data: jsonData, encoding: .utf8) else {
+            call.reject("Invalid options")
+            return
+        }
+        
+        let jsonInputString = """
+        {"name": "camera.setOptions", "parameters": {"options": \(options)}}
+        """
+        
+        guard let url = URL(string: cameraUrl + "/osc/commands/execute") else {
+            call.reject("Invalid URL")
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = jsonInputString.data(using: .utf8)
+        
+        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if let error = error {
+                call.reject("Failed to set settings", error.localizedDescription)
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  let data = data else {
+                call.reject("Failed to set settings")
+                return
+            }
+            
+            if httpResponse.statusCode == 200 {
+                if let result = String(data: data, encoding: .utf8) {
+                    call.resolve(["settings": result])
+                } else {
+                    call.reject("Failed to parse settings response")
+                }
+            } else {
+                if let error = String(data: data, encoding: .utf8) {
+                    call.reject("Failed to set settings: \(error)")
+                } else {
+                    call.reject("Failed to set settings")
+                }
+            }
+        }
+        task.resume()
+    }
+
+    @objc func sendCommand(_ call: CAPPluginCall) {
+        guard let endpoint = call.getString("endpoint"),
+              let data = call.getObject("payload"),
+              let jsonData = try? JSONSerialization.data(withJSONObject: data),
+              let payload = String(data: jsonData, encoding: .utf8) else {
+            call.reject("Invalid endpoint or payload")
+            return
+        }
+        
+        guard let url = URL(string: cameraUrl + endpoint) else {
+            call.reject("Invalid URL")
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = payload.data(using: .utf8)
+        
+        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if let error = error {
+                call.reject("Command failed", error.localizedDescription)
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  let data = data else {
+                call.reject("Command failed")
+                return
+            }
+            
+            if httpResponse.statusCode == 200 {
+                if let result = String(data: data, encoding: .utf8) {
+                    call.resolve(JSObject(rawValue: result) ?? [:])
+                } else {
+                    call.reject("Failed to parse command response")
+                }
+            } else {
+                if let error = String(data: data, encoding: .utf8) {
+                    call.reject("Command failed: \(error)")
+                } else {
+                    call.reject("Command failed")
+                }
+            }
+        }
+        task.resume()
     }
 
     private func startLivePreview(completion: @escaping (UIImage?, Error?) -> Void) {
         self.imageCompletion = completion
         self.startLivePreview(completion: completion)
     }
-
+        
     private func stopLivePreview() {
         print("Stopping live preview")
         self.task?.cancel()
     }
-
+        
     private func processMJPEGStream(data: Data) {
         if data.range(of: self.startMarker) != nil {
             self.buffer = Data()
@@ -336,8 +464,8 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
                     print("Frame parsed successfully")
                     DispatchQueue.main.async {
                         self.previewView?.image = image
-                    }
-                }
+            }
+        }
             }
         }
     }
@@ -347,8 +475,8 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
             guard let imgProvider = CGDataProvider(data: data as CFData) else {
                 completion(nil, RicohThetaError.parseImageProvider)
                 return
-            }
-            
+                }
+                
             guard let image = CGImage(
                 jpegDataProviderSource: imgProvider,
                 decode: nil,
