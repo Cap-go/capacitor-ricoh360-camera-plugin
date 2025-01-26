@@ -422,8 +422,10 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
             }
             
             if httpResponse.statusCode == 200 {
-                if let result = String(data: data, encoding: .utf8) {
-                    call.resolve(JSObject(rawValue: result) ?? [:])
+                if let result = String(data: data, encoding: .utf8),
+                   let jsonData = result.data(using: .utf8),
+                   let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
+                    call.resolve(json)
                 } else {
                     call.reject("Failed to parse command response")
                 }
