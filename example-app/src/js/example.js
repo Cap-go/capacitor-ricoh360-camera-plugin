@@ -94,10 +94,33 @@ async function sendCommand() {
     }
 }
 
+async function listPhotos() {
+    try {
+        const result = await Ricoh360Camera.sendCommand({
+            endpoint: '/osc/commands/execute',
+            payload: {
+                name: "camera.listFiles",
+                parameters: {
+                    "fileType": "all",
+                    "startPosition": 0,
+                    "entryCount": 100,
+                    "maxThumbSize": 0,
+                    "_detail": true
+                }
+            }
+        })
+        document.getElementById('settingsValue').textContent = JSON.stringify(result, null, 2)
+    } catch (e) {
+        console.error(e)
+        document.getElementById('settingsValue').textContent = `Error: ${e.message}`
+    } 
+} 
+
 window.openCamera = openCamera
 window.closeCamera = closeCamera
 window.takePicture = takePicture
 window.readSettings = readSettings
+window.readFiles = listPhotos
 window.setSettings = setSettings
 window.sendCommand = sendCommand
 

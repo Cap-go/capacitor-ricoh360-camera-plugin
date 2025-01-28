@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.io.ByteArrayOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import android.util.Base64;
 import android.widget.ImageView;
 import android.widget.FrameLayout;
 import android.graphics.Bitmap;
@@ -18,6 +20,10 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.stream.Collectors;
 import java.util.Arrays;
 
@@ -70,6 +76,11 @@ public class Ricoh360CameraPlugin extends Plugin {
             if (containerView == null) {
                 containerView = new FrameLayout(getActivity().getApplicationContext());
                 containerView.setId(containerViewId);
+                FrameLayout.LayoutParams containerParams = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                );
+                containerView.setLayoutParams(containerParams);
 
                 if (previewView == null) {
                     previewView = new ImageView(getContext());
@@ -77,8 +88,10 @@ public class Ricoh360CameraPlugin extends Plugin {
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
                     );
+                    params.gravity = android.view.Gravity.FILL;
                     previewView.setLayoutParams(params);
-                    previewView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    previewView.setAdjustViewBounds(true);
+                    previewView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                     containerView.addView(previewView);
                 }
 
@@ -174,6 +187,8 @@ public class Ricoh360CameraPlugin extends Plugin {
                         } else {
                             buffer.reset();
                         }
+                    } else {
+                        String bufferContent = new String(bufferData);
                     }
                 }
             } catch (Exception e) {
@@ -187,6 +202,7 @@ public class Ricoh360CameraPlugin extends Plugin {
         try {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+
             final Bitmap bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.length, options);
             if (bitmap != null) {
                 getActivity().runOnUiThread(() -> {
@@ -198,6 +214,91 @@ public class Ricoh360CameraPlugin extends Plugin {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @PluginMethod
+    public void getCameraAsset(PluginCall call) {
+        try {
+            JSObject data = call.getData();
+            String assetUrl = data.getString("url");
+            boolean saveToFile = call.getBoolean("saveToFile", false);
+            
+            if (assetUrl == null) {
+                call.reject("URL is required");
+                return;
+            }
+
+            new Thread(() -> {
+                try {
+                    URL url = new URL(assetUrl);
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.setConnectTimeout(10000);
+                    connection.setReadTimeout(10000);
+                    
+                    int responseCode = connection.getResponseCode();
+                    
+                    InputStream inputStream;
+                    if (responseCode >= 400) {
+                        inputStream = connection.getErrorStream();
+                    } else {
+                        inputStream = connection.getInputStream();
+                    }
+                    
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                    
+                    byte[] bytes = outputStream.toByteArray();
+                    JSObject result = new JSObject();
+                    result.put("statusCode", responseCode);
+
+                    if (saveToFile) {
+                        // Create a unique filename based on timestamp
+                        String timestamp = String.valueOf(System.currentTimeMillis());
+                        String filename = "ricoh_" + timestamp + ".jpg";
+                        java.io.File outputDir = getContext().getCacheDir();
+                        java.io.File outputFile = new java.io.File(outputDir, filename);
+
+                        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outputFile)) {
+                            fos.write(bytes);
+                            result.put("filePath", outputFile.getAbsolutePath());
+                        }
+                    } else {
+                        // downSize here to make it work with our magic watcher lib
+                        String base64 = android.util.Base64.encodeToString(downSizeImage(bytes), Base64.NO_WRAP);
+                        result.put("data", base64);
+                    }
+                    
+                    call.resolve(result);
+                    
+                } catch (Exception e) {
+                    call.reject("Failed to fetch asset: " + e.getMessage(), e);
+                }
+            }).start();
+            
+        } catch (Exception e) {
+            call.reject("Failed to process request: " + e.getMessage(), e);
+        }
+    }
+
+    @PluginMethod
+    public void listFiles(PluginCall call) {
+        JSObject parameters = new JSObject();
+        parameters.put("fileType", call.getString("fileType", "all"));
+        parameters.put("startPosition", call.getInt("startPosition", 0));
+        parameters.put("entryCount", call.getInt("entryCount", 100));
+        parameters.put("maxThumbSize", call.getInt("maxThumbSize", 0));
+        parameters.put("_detail", call.getBoolean("_detail", true));
+
+        JSObject payload = new JSObject();
+        payload.put("name", "camera.listFiles");
+        payload.put("parameters", parameters);
+
+        sendCommandRaw(call, "/osc/commands/execute", payload);
     }
 
     @PluginMethod
@@ -291,34 +392,27 @@ public class Ricoh360CameraPlugin extends Plugin {
         }
     }
 
-    @PluginMethod
-    public void sendCommand(PluginCall call) {
+    private void sendCommandRaw(PluginCall call, String endpoint, JSONObject payload) {
         try {
-            String endpoint = call.getString("endpoint");
-            JSObject payload = call.getObject("payload");
-            if (endpoint == null || payload == null) {
-                call.reject("Endpoint and payload are required");
-                return;
-            }
-
             String commandUrl = cameraUrl + endpoint;
-            String jsonInputString = call.getData().getJSONObject("payload").toString();
+            String jsonInputString = payload.toString();
+
             android.util.Log.d("Ricoh360Camera", "Request body: " + jsonInputString);
 
             HttpURLConnection connection = createConnection(commandUrl, jsonInputString);
             int responseCode = connection.getResponseCode();
             android.util.Log.d("Ricoh360Camera", "Response code: " + responseCode);
-            
+
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 InputStream inputStream = connection.getInputStream();
                 String result = new BufferedReader(new InputStreamReader(inputStream))
-                    .lines().collect(Collectors.joining("\n"));
+                        .lines().collect(Collectors.joining("\n"));
                 android.util.Log.d("Ricoh360Camera", "Response body: " + result);
                 call.resolve(new JSObject(result));
             } else {
                 InputStream errorStream = connection.getErrorStream();
                 String error = new BufferedReader(new InputStreamReader(errorStream))
-                    .lines().collect(Collectors.joining("\n"));
+                        .lines().collect(Collectors.joining("\n"));
                 android.util.Log.e("Ricoh360Camera", "Error response: " + error);
                 call.reject("Command failed: " + error);
             }
@@ -326,6 +420,18 @@ public class Ricoh360CameraPlugin extends Plugin {
             android.util.Log.e("Ricoh360Camera", "Exception: " + e.getMessage(), e);
             call.reject("Command failed: " + e.getMessage(), e);
         }
+    }
+
+    @PluginMethod
+    public void sendCommand(PluginCall call) {
+        String endpoint = call.getString("endpoint");
+        JSObject payload = call.getObject("payload");
+        if (endpoint == null || payload == null) {
+            call.reject("Endpoint and payload are required");
+            return;
+        }
+
+        sendCommandRaw(call, endpoint, payload);
     }
 
     private HttpURLConnection createConnection(String urlString, String jsonInputString) throws Exception {
@@ -347,5 +453,48 @@ public class Ricoh360CameraPlugin extends Plugin {
         os.close();
 
         return connection;
+    }
+
+    private byte[] downSizeImage(byte[] image) {
+        final int MAX_WIDTH = 2048; // Must be equal to or less than 4096
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        
+        BitmapFactory.decodeByteArray(image, 0, image.length, options);
+        android.util.Log.d("Ricoh360Camera", "JPEG width: " + options.outWidth);
+
+        if (options.outWidth > MAX_WIDTH) {
+            float scaleFactor = MAX_WIDTH / (float) options.outWidth;
+            android.graphics.Matrix scale = new android.graphics.Matrix();
+            scale.postScale(scaleFactor, scaleFactor);
+
+            Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0, image.length);
+            Bitmap resizedBitmap = Bitmap.createBitmap(
+                bitmap, 
+                0, 
+                0, 
+                options.outWidth, 
+                options.outHeight, 
+                scale, 
+                false
+            );
+
+            android.util.Log.d("Ricoh360Camera", "Resized width: " + resizedBitmap.getWidth());
+            bitmap.recycle();
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            try {
+                resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                resizedBitmap.recycle();
+                return outputStream.toByteArray();
+            } finally {
+                try {
+                    outputStream.close();
+                } catch (Exception e) {
+                    android.util.Log.e("Ricoh360Camera", "Error closing output stream", e);
+                }
+            }
+        }
+        return image;
     }
 } 
