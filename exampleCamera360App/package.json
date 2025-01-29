@@ -17,6 +17,7 @@
     "@capacitor/core": "7.0.1",
     "@capacitor/filesystem": "^7.0.0",
     "@capacitor/haptics": "7.0.0",
+    "@capacitor/ios": "^7.0.1",
     "@capacitor/keyboard": "7.0.0",
     "@capacitor/status-bar": "7.0.0",
     "@ionic/vue": "^8.0.0",

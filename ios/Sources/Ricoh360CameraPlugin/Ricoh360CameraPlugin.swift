@@ -3,6 +3,7 @@ import Capacitor
 import Alamofire
 import AVKit
 import UIKit
+import Network
 
 /**
  * Please read the Capacitor iOS Plugin Development Guide
@@ -21,11 +22,16 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
         CAPPluginMethod(name: "stopLivePreview", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "captureVideo", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "sendCommand", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getCameraAsset", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "listFiles", returnType: CAPPluginReturnPromise),
     ]
 
     private var previewView: UIImageView?
     private var cameraUrl: String = "http://192.168.1.1"
     private var httpStream: HttpStream?
+    private var connection: NWConnection?
+    private var browser: NWBrowser?
+    private var permissionCompletion: ((Bool) -> Void)?
 
     enum RicohThetaError: Error {
         case invalidUrl, badResponse, parseImageProvider, parseCGImage
@@ -403,37 +409,249 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
             return
         }
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpBody = payload.data(using: .utf8)
+        requestLocalNetworkPermission { [weak self] granted in
+            print("Permission flow completed with result: \(granted)")
+            if granted {
+                print("Proceeding with socket connection")
+                var request = URLRequest(url: url)
+                request.httpMethod = "POST"
+                request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+                request.setValue("application/json", forHTTPHeaderField: "Accept")
+                request.httpBody = payload.data(using: .utf8)
+                
+                let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+                    if let error = error {
+                        call.reject("Command failed", error.localizedDescription)
+                        return
+                    }
+                    
+                    guard let httpResponse = response as? HTTPURLResponse,
+                          let data = data else {
+                        call.reject("Command failed")
+                        return
+                    }
+                    
+                    if httpResponse.statusCode == 200 {
+                        if let result = String(data: data, encoding: .utf8),
+                           let jsonData = result.data(using: .utf8),
+                           let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
+                            call.resolve(json)
+                        } else {
+                            call.reject("Failed to parse command response")
+                        }
+                    } else {
+                        if let error = String(data: data, encoding: .utf8) {
+                            call.reject("Command failed: \(error)")
+                        } else {
+                            call.reject("Command failed")
+                        }
+                    }
+                }
+                task.resume()
+            } else {
+                print("Permission not granted")
+                call.reject("Permission not granted")
+            }
+        }
+    }
+
+    private func requestLocalNetworkPermission(completion: @escaping (Bool) -> Void) {
+        self.permissionCompletion = completion
         
-        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+        // Use Bonjour browsing to trigger local network permission
+        let parameters = NWParameters()
+        parameters.includePeerToPeer = true
+        
+        // Browse for all services
+        let browser = NWBrowser(for: .bonjour(type: "_http._tcp", domain: nil), using: parameters)
+        self.browser = browser
+        
+        browser.stateUpdateHandler = { [weak self] state in
+            switch state {
+            case .ready:
+                print("Browser is ready")
+                self?.permissionCompletion?(true)
+                self?.browser?.cancel()
+            case .failed(let error):
+                print("Browser failed: \(error)")
+                if let error = error as? NWError {
+                    switch error {
+                    case .dns(let dnsError):
+                        print("DNS error: \(dnsError)")
+                    case .posix(let code):
+                        print("POSIX error: \(code)")
+                    default:
+                        print("Other error: \(error)")
+                    }
+                }
+                self?.permissionCompletion?(false)
+                self?.browser?.cancel()
+            case .cancelled:
+                print("Browser was cancelled")
+            case .waiting(let error):
+                print("Browser is waiting: \(error)")
+            default:
+                break
+            }
+        }
+        
+        browser.browseResultsChangedHandler = { results, changes in
+            print("Found \(results.count) services")
+            for result in results {
+                print("Service: \(result.endpoint)")
+            }
+        }
+        
+        print("Starting network service browser")
+        browser.start(queue: .main)
+        
+        // Set a timeout
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            if self?.browser != nil {
+                print("Browser timeout - proceeding anyway")
+                self?.permissionCompletion?(true)
+                self?.browser?.cancel()
+            }
+        }
+    }
+
+    @objc func getCameraAsset(_ call: CAPPluginCall) {
+        guard let assetUrl = call.getString("url") else {
+            call.reject("URL is required")
+            return
+        }
+        
+        let saveToFile = call.getBool("saveToFile", false)
+        
+        guard let url = URL(string: assetUrl) else {
+            call.reject("Invalid URL")
+            return
+        }
+        
+        let task = URLSession.shared.dataTask(with: url) { [weak self] (data, response, error) in
+            guard let self = self else { return }
+            
             if let error = error {
-                call.reject("Command failed", error.localizedDescription)
+                call.reject("Failed to fetch asset: \(error.localizedDescription)")
                 return
             }
             
             guard let httpResponse = response as? HTTPURLResponse,
                   let data = data else {
-                call.reject("Command failed")
+                call.reject("Failed to fetch asset")
+                return
+            }
+            
+            var result = JSObject()
+            result["statusCode"] = httpResponse.statusCode
+            
+            if saveToFile {
+                let timestamp = Int(Date().timeIntervalSince1970 * 1000)
+                let filename = "ricoh_\(timestamp).jpg"
+                let tempDir = FileManager.default.temporaryDirectory
+                let fileURL = tempDir.appendingPathComponent(filename)
+                
+                do {
+                    try data.write(to: fileURL)
+                    result["filePath"] = fileURL.path
+                    call.resolve(result)
+                } catch {
+                    call.reject("Failed to save file: \(error.localizedDescription)")
+                }
+            } else {
+                // Downsize and convert to base64
+                if let downsizedData = self.downSizeImage(data) {
+                    let base64String = downsizedData.base64EncodedString()
+                    result["data"] = base64String
+                    call.resolve(result)
+                } else {
+                    call.reject("Failed to process image")
+                }
+            }
+        }
+        task.resume()
+    }
+    
+    private func downSizeImage(_ imageData: Data) -> Data? {
+        let maxWidth: CGFloat = 2048 // Must be equal to or less than 4096
+        
+        guard let image = UIImage(data: imageData) else { return nil }
+        let originalWidth = image.size.width
+        
+        if originalWidth > maxWidth {
+            let scaleFactor = maxWidth / originalWidth
+            let newSize = CGSize(width: originalWidth * scaleFactor, height: image.size.height * scaleFactor)
+            
+            UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+            guard let resizedImage = UIGraphicsGetImageFromCurrentImageContext() else {
+                UIGraphicsEndImageContext()
+                return nil
+            }
+            UIGraphicsEndImageContext()
+            
+            return resizedImage.jpegData(compressionQuality: 1.0)
+        }
+        
+        return imageData
+    }
+
+    @objc func listFiles(_ call: CAPPluginCall) {
+        var parameters = JSObject()
+        parameters["fileType"] = call.getString("fileType", "all")
+        parameters["startPosition"] = call.getInt("startPosition", 0)
+        parameters["entryCount"] = call.getInt("entryCount", 100)
+        parameters["maxThumbSize"] = call.getInt("maxThumbSize", 0)
+        parameters["_detail"] = call.getBool("_detail", true)
+        
+        var payload = JSObject()
+        payload["name"] = "camera.listFiles"
+        payload["parameters"] = parameters
+        
+        guard let url = URL(string: "\(cameraUrl)/osc/commands/execute") else {
+            call.reject("Invalid URL")
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        } catch {
+            call.reject("Failed to serialize request: \(error.localizedDescription)")
+            return
+        }
+        
+        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if let error = error {
+                call.reject("Failed to list files: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  let data = data else {
+                call.reject("Failed to list files")
                 return
             }
             
             if httpResponse.statusCode == 200 {
-                if let result = String(data: data, encoding: .utf8),
-                   let jsonData = result.data(using: .utf8),
-                   let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
-                    call.resolve(json)
-                } else {
-                    call.reject("Failed to parse command response")
+                do {
+                    if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        call.resolve(json)
+                    } else {
+                        call.reject("Failed to parse response")
+                    }
+                } catch {
+                    call.reject("Failed to parse response: \(error.localizedDescription)")
                 }
             } else {
-                if let error = String(data: data, encoding: .utf8) {
-                    call.reject("Command failed: \(error)")
+                if let errorString = String(data: data, encoding: .utf8) {
+                    call.reject("Failed to list files: \(errorString)")
                 } else {
-                    call.reject("Command failed")
+                    call.reject("Failed to list files")
                 }
             }
         }
