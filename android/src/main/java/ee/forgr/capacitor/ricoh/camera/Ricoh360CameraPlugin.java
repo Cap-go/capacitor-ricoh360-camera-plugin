@@ -70,6 +70,7 @@ public class Ricoh360CameraPlugin extends Plugin {
     @PluginMethod
     public void livePreview(PluginCall call) {
         boolean displayInFront = call.getBoolean("displayInFront", true);
+        boolean cropPreview = call.getBoolean("cropPreview", false);
 
         getActivity().runOnUiThread(() -> {
             containerView = getBridge().getActivity().findViewById(containerViewId);
@@ -77,21 +78,30 @@ public class Ricoh360CameraPlugin extends Plugin {
                 containerView = new FrameLayout(getActivity().getApplicationContext());
                 containerView.setId(containerViewId);
                 FrameLayout.LayoutParams containerParams = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
                 );
                 containerView.setLayoutParams(containerParams);
 
                 if (previewView == null) {
                     previewView = new ImageView(getContext());
-                    FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    );
-                    params.gravity = android.view.Gravity.FILL;
+                    FrameLayout.LayoutParams params;
+                    if (cropPreview) {
+                        params = new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        );
+                        params.gravity = android.view.Gravity.FILL;
+                        previewView.setAdjustViewBounds(true);
+                    } else {
+                        params = new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT
+                        );
+                        params.gravity = android.view.Gravity.CENTER;
+                    }
                     previewView.setLayoutParams(params);
-                    previewView.setAdjustViewBounds(true);
-                    previewView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    previewView.setScaleType(cropPreview ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
                     containerView.addView(previewView);
                 }
 

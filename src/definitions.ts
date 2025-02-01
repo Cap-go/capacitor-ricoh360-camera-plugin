@@ -56,6 +56,7 @@ export interface VideoCaptureOptions {
 
 export interface LivePreviewOptions {
   displayInFront?: boolean;
+  cropPreview?: boolean
 }
 
 export interface CameraInfo {

@@ -14,7 +14,8 @@
               <ion-label position="stacked">Camera IP:</ion-label>
               <ion-input v-model="cameraIp" placeholder="192.168.1.1"></ion-input>
             </ion-item>
-            <ion-button @click="openCamera">Open Camera</ion-button>
+            <ion-button @click="openCamera(false)">Open Camera</ion-button>
+            <ion-button @click="openCamera(true)">Open Camera (crop)</ion-button>
             <ion-button @click="readSettings">Read Settings</ion-button>
             <ion-button @click="setSettings">Set Settings</ion-button>
             <ion-button @click="sendCommand">Send Command</ion-button>
@@ -73,13 +74,13 @@ watch(isPreviewActive, (newVal: boolean) => {
   }
 });
 
-async function openCamera() {
+async function openCamera(crop: boolean) {
   try {
     await Ricoh360Camera.initialize({
       url: `http://${cameraIp.value}`
     });
     isPreviewActive.value = true;
-    await Ricoh360Camera.livePreview({ displayInFront: false });
+    await Ricoh360Camera.livePreview({ displayInFront: false, cropPreview: crop });
     console.log("Camera opened");
   } catch (e) {
     console.error(e);

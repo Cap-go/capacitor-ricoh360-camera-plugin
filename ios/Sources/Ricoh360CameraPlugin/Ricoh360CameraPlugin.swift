@@ -214,23 +214,36 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
     @objc func livePreview(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             if self.previewView == nil {
-                self.previewView = UIImageView(frame: self.bridge?.viewController?.view.bounds ?? CGRect.zero)
-                self.previewView?.backgroundColor = .clear
-                self.previewView?.contentMode = .scaleAspectFit
                 let displayInFront = call.getBool("displayInFront") ?? true
-
+                let cropPreview = call.getBool("cropPreview") ?? false
+                
+                // Create preview view with zero frame initially
+                self.previewView = UIImageView(frame: .zero)
+                self.previewView?.backgroundColor = .clear
+                self.previewView?.contentMode = cropPreview ? .scaleAspectFill : .scaleAspectFit
+                self.previewView?.clipsToBounds = cropPreview // Only clip bounds if cropping
+                
                 // Make webview transparent
                 self.webView?.isOpaque = false
                 self.webView?.backgroundColor = UIColor.clear
                 self.webView?.scrollView.backgroundColor = UIColor.clear
                 
-                if displayInFront {
-                    self.bridge?.viewController?.view.addSubview(self.previewView!)
-                } else {
-                    self.webView?.superview?.addSubview(self.previewView!)
-                    if !displayInFront {
+                if let previewView = self.previewView {
+                    if displayInFront {
+                        self.bridge?.viewController?.view.addSubview(previewView)
+                    } else {
+                        self.webView?.superview?.addSubview(previewView)
                         self.webView?.superview?.bringSubviewToFront(self.webView!)
                     }
+                    
+                    // Make preview view fill parent
+                    previewView.translatesAutoresizingMaskIntoConstraints = false
+                    NSLayoutConstraint.activate([
+                        previewView.topAnchor.constraint(equalTo: previewView.superview!.topAnchor),
+                        previewView.bottomAnchor.constraint(equalTo: previewView.superview!.bottomAnchor),
+                        previewView.leadingAnchor.constraint(equalTo: previewView.superview!.leadingAnchor),
+                        previewView.trailingAnchor.constraint(equalTo: previewView.superview!.trailingAnchor)
+                    ])
                 }
             }
 

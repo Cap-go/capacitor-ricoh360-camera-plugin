@@ -314,6 +314,7 @@ Send raw command to camera
 | Prop                 | Type                 |
 | -------------------- | -------------------- |
 | **`displayInFront`** | <code>boolean</code> |
+| **`cropPreview`**    | <code>boolean</code> |
 
 
 ### Type Aliases

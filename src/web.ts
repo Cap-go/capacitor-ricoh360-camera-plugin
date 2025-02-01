@@ -7,11 +7,11 @@ export class Ricoh360CameraWeb extends WebPlugin implements Ricoh360CameraPlugin
     throw new Error('Web implementation not available for initialize.');
   }
 
-  async getCameraAsset(options: GetCameraAssetOptions): Promise<GetCameraAssetResponse> {
+  async getCameraAsset(_options: GetCameraAssetOptions): Promise<GetCameraAssetResponse> {
     throw this.unimplemented('Not implemented on web.');
   }
 
-  async listFiles(options: ListFilesOptions): Promise<ListFilesResponse> {
+  async listFiles(_options: ListFilesOptions): Promise<ListFilesResponse> {
     throw this.unimplemented('Not implemented on web.');
   }
 
