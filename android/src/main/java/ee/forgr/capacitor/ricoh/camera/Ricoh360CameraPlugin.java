@@ -313,54 +313,22 @@ public class Ricoh360CameraPlugin extends Plugin {
 
     @PluginMethod
     public void capturePicture(PluginCall call) {
-        String jsonInputString = "{\"name\": \"camera.takePicture\"}";
-        String captureUrl = cameraUrl + "/osc/commands/execute";
-
-        try {
-            HttpURLConnection connection = createConnection(captureUrl, jsonInputString);
-            int responseCode = connection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                call.resolve(new JSObject().put("picture", "Picture taken"));
-            } else {
-                call.reject("Failed to take picture");
-            }
-        } catch (Exception e) {
-            call.reject("Failed to take picture", e);
-        }
+        JSObject payload = new JSObject();
+        payload.put("name", "camera.takePicture");
+        sendCommandRaw(call, "/osc/commands/execute", payload);
     }
 
     @PluginMethod
     public void readSettings(PluginCall call) {
         try {
             JSObject data = call.getData();
-            String jsonInputString = String.format(
-                "{\"name\": \"camera.getOptions\", \"parameters\": {\"optionNames\": %s}}",
-                data.getJSONArray("options").toString()
-            );
-            android.util.Log.d("Ricoh360Camera", "Request body: " + jsonInputString);
-            String settingsUrl = cameraUrl + "/osc/commands/execute";
-
-            HttpURLConnection connection = createConnection(settingsUrl, jsonInputString);
-            int responseCode = connection.getResponseCode();
-            android.util.Log.d("Ricoh360Camera", "Response code: " + responseCode);
+            JSObject payload = new JSObject();
+            payload.put("name", "camera.getOptions");
+            JSObject parameters = new JSObject();
+            parameters.put("optionNames", data.getJSONArray("options"));
+            payload.put("parameters", parameters);
             
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                InputStream inputStream = connection.getInputStream();
-                String result = new BufferedReader(new InputStreamReader(inputStream))
-                    .lines().collect(Collectors.joining("\n"));
-                android.util.Log.d("Ricoh360Camera", "Response body: " + result);
-                
-                // Parse the response to get just the options object
-                JSObject response = new JSObject(result);
-                String options = response.getJSONObject("results").getJSONObject("options").toString();
-                call.resolve(new JSObject(options));
-            } else {
-                InputStream errorStream = connection.getErrorStream();
-                String error = new BufferedReader(new InputStreamReader(errorStream))
-                    .lines().collect(Collectors.joining("\n"));
-                android.util.Log.e("Ricoh360Camera", "Error response: " + error);
-                call.reject("Failed to read settings: " + error);
-            }
+            sendCommandRaw(call, "/osc/commands/execute", payload);
         } catch (Exception e) {
             android.util.Log.e("Ricoh360Camera", "Exception: " + e.getMessage(), e);
             call.reject("Failed to read settings: " + e.getMessage(), e);
@@ -371,31 +339,13 @@ public class Ricoh360CameraPlugin extends Plugin {
     public void setSettings(PluginCall call) {
         try {
             JSObject data = call.getData();
-            JSObject options = data.getJSObject("options");
-            String jsonInputString = String.format(
-                "{\"name\": \"camera.setOptions\", \"parameters\": {\"options\": %s}}",
-                options.toString()
-            );
-            android.util.Log.d("Ricoh360Camera", "Request body: " + jsonInputString);
-            String settingsUrl = cameraUrl + "/osc/commands/execute";
-
-            HttpURLConnection connection = createConnection(settingsUrl, jsonInputString);
-            int responseCode = connection.getResponseCode();
-            android.util.Log.d("Ricoh360Camera", "Response code: " + responseCode);
+            JSObject payload = new JSObject();
+            payload.put("name", "camera.setOptions");
+            JSObject parameters = new JSObject();
+            parameters.put("options", data.getJSObject("options"));
+            payload.put("parameters", parameters);
             
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                InputStream inputStream = connection.getInputStream();
-                String result = new BufferedReader(new InputStreamReader(inputStream))
-                    .lines().collect(Collectors.joining("\n"));
-                android.util.Log.d("Ricoh360Camera", "Response body: " + result);
-                call.resolve(new JSObject().put("settings", result));
-            } else {
-                InputStream errorStream = connection.getErrorStream();
-                String error = new BufferedReader(new InputStreamReader(errorStream))
-                    .lines().collect(Collectors.joining("\n"));
-                android.util.Log.e("Ricoh360Camera", "Error response: " + error);
-                call.reject("Failed to set settings: " + error);
-            }
+            sendCommandRaw(call, "/osc/commands/execute", payload);
         } catch (Exception e) {
             android.util.Log.e("Ricoh360Camera", "Exception: " + e.getMessage(), e);
             call.reject("Failed to set settings: " + e.getMessage(), e);
