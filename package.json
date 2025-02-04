@@ -1,5 +1,5 @@
 {
-  "name": "ricoh360-camera",
+  "name": "@capgo/ricoh360",
   "version": "0.0.1",
   "description": "Provides an SDK for the Ricoh360 cameras for Capacitor",
   "main": "dist/plugin.cjs.js",

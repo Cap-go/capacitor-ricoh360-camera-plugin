@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonList, IonItem, IonLabel } from '@ionic/vue';
-import { Ricoh360Camera } from 'ricoh360-camera';
+import { Ricoh360Camera } from '@capgo/ricoh360';
 import { Filesystem } from '@capacitor/filesystem';
 import { ref } from 'vue';
 import { throttleTime, switchMap } from 'rxjs';

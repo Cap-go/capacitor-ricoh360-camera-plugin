@@ -50,7 +50,7 @@ import {
   IonLabel,
   IonInput
 } from '@ionic/vue';
-import { Ricoh360Camera } from 'ricoh360-camera';
+import { Ricoh360Camera } from '@capgo/ricoh360';
 
 const cameraIp = ref('192.168.1.1');
 const isPreviewActive = ref(false);

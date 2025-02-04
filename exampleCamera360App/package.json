@@ -23,7 +23,7 @@
     "@ionic/vue": "^8.0.0",
     "@ionic/vue-router": "^8.0.0",
     "ionicons": "^7.0.0",
-    "ricoh360-camera": "file:..",
+    "@capgo/ricoh360": "file:..",
     "rxjs": "^7.8.1",
     "vue": "^3.3.0",
     "vue-router": "^4.2.0"
