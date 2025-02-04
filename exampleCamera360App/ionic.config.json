@@ -1,0 +1,7 @@
+{
+  "name": "exampleCamera360App",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}

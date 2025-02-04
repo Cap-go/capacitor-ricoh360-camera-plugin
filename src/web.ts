@@ -1,33 +1,45 @@
 import { WebPlugin } from '@capacitor/core';
 
-import type { InitializeOptions, PictureCaptureOptions, VideoCaptureOptions, LivePreviewOptions, Ricoh360CameraPlugin, CommandResponse, CameraInfo } from './definitions';
+import type { Ricoh360CameraPlugin, CommandResponse, GetCameraAssetOptions, GetCameraAssetResponse, ListFilesOptions, ListFilesResponse } from './definitions';
 
 export class Ricoh360CameraWeb extends WebPlugin implements Ricoh360CameraPlugin {
-  async initialize(_options: InitializeOptions): Promise<CameraInfo> {
+  async initialize(__options: any): Promise<CommandResponse> {
     throw new Error('Web implementation not available for initialize.');
   }
 
-  async capturePicture(_options: PictureCaptureOptions): Promise<CommandResponse> {
+  async getCameraAsset(_options: GetCameraAssetOptions): Promise<GetCameraAssetResponse> {
+    throw this.unimplemented('Not implemented on web.');
+  }
+
+  async listFiles(_options: ListFilesOptions): Promise<ListFilesResponse> {
+    throw this.unimplemented('Not implemented on web.');
+  }
+
+  async capturePicture(): Promise<CommandResponse> {
     throw new Error('Web implementation not available for capturePicture.');
   }
 
-  async captureVideo(_options: VideoCaptureOptions): Promise<CommandResponse> {
+  async captureVideo(__options: any): Promise<CommandResponse> {
     throw new Error('Web implementation not available for captureVideo.');
   }
 
-  async livePreview(_options: LivePreviewOptions): Promise<void> {
+  async livePreview(_options: any): Promise<CommandResponse> {
     throw new Error('Web implementation not available for livePreview.');
   }
 
-  async stopLivePreview(): Promise<void> {
+  async stopLivePreview(): Promise<CommandResponse> {
     throw new Error('Web implementation not available for stopLivePreview.');
   }
 
-  async readSettings(): Promise<CommandResponse> {
+  async readSettings(_options: any): Promise<CommandResponse> {
     throw new Error('Web implementation not available for readSettings.');
   }
 
   async setSettings(_options: any): Promise<CommandResponse> {
     throw new Error('Web implementation not available for setSettings.');
+  }
+
+  async sendCommand(_options: any): Promise<CommandResponse> {
+    throw new Error('Web implementation not available for sendCommand.');
   }
 }

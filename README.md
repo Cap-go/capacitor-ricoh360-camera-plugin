@@ -52,7 +52,39 @@ Initializes the SDK with camera URL
 capturePicture() => Promise<CommandResponse>
 ```
 
-Captures a picture
+Retrieves a camera asset from a URL and returns it as base64
+
+| Param         | Type                                                                    | Description                                       |
+| ------------- | ----------------------------------------------------------------------- | ------------------------------------------------- |
+| **`options`** | <code><a href="#getcameraassetoptions">GetCameraAssetOptions</a></code> | Object containing the URL to fetch the asset from |
+
+**Returns:** <code>Promise&lt;<a href="#getcameraassetresponse">GetCameraAssetResponse</a>&gt;</code>
+
+--------------------
+
+
+### listFiles(...)
+
+```typescript
+listFiles(options?: ListFilesOptions | undefined) => Promise<ListFilesResponse>
+```
+
+Lists files stored on the camera
+
+| Param         | Type                                                          | Description                                        |
+| ------------- | ------------------------------------------------------------- | -------------------------------------------------- |
+| **`options`** | <code><a href="#listfilesoptions">ListFilesOptions</a></code> | Optional parameters to filter and paginate results |
+
+**Returns:** <code>Promise&lt;<a href="#listfilesresponse">ListFilesResponse</a>&gt;</code>
+
+--------------------
+
+
+### capturePicture()
+
+```typescript
+capturePicture() => Promise<CommandResponse>
+```
 
 **Returns:** <code>Promise&lt;<a href="#commandresponse">CommandResponse</a>&gt;</code>
 
@@ -160,7 +192,22 @@ Send raw command to camera
 ### Interfaces
 
 
-#### CommandResponse
+#### GetCameraAssetResponse
+
+| Prop             | Type                |
+| ---------------- | ------------------- |
+| **`statusCode`** | <code>number</code> |
+| **`data`**       | <code>string</code> |
+| **`filePath`**   | <code>string</code> |
+
+
+#### GetCameraAssetOptions
+
+| Prop             | Type                 |
+| ---------------- | -------------------- |
+| **`url`**        | <code>string</code>  |
+| **`saveToFile`** | <code>boolean</code> |
+
 
 | Prop           | Type                |
 | -------------- | ------------------- |
@@ -170,6 +217,9 @@ Send raw command to camera
 | **`picture`**  | <code>string</code> |
 | **`settings`** | <code>string</code> |
 
+| Prop          | Type                                                                                                                                                                                                                                                  |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`results`** | <code>{ entries: { name: string; fileUrl: string; size: number; dateTimeZone: string; width?: number; height?: number; previewUrl?: string; _projectionType?: string; isProcessed?: boolean; _thumbSize?: number; }[]; totalEntries: number; }</code> |
 
 #### InitializeOptions
 
@@ -192,6 +242,7 @@ Send raw command to camera
 | Prop                 | Type                 |
 | -------------------- | -------------------- |
 | **`displayInFront`** | <code>boolean</code> |
+| **`cropPreview`**    | <code>boolean</code> |
 
 
 ### Type Aliases
@@ -201,6 +252,20 @@ Send raw command to camera
 
 Construct a type with a set of properties K of type T
 
-<code>{ [P in K]: T; }</code>
+<code>{
+ [P in K]: T;
+ }</code>
+
+
+### Type Aliases
+
+
+#### Record
+
+Construct a type with a set of properties K of type T
+
+<code>{
+ [P in K]: T;
+ }</code>
 
 </docgen-api>

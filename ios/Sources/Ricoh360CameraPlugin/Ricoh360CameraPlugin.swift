@@ -3,6 +3,7 @@ import Capacitor
 import Alamofire
 import AVKit
 import UIKit
+import Network
 
 /**
  * Please read the Capacitor iOS Plugin Development Guide
@@ -21,11 +22,16 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
         CAPPluginMethod(name: "stopLivePreview", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "captureVideo", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "sendCommand", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getCameraAsset", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "listFiles", returnType: CAPPluginReturnPromise),
     ]
 
     private var previewView: UIImageView?
     private var cameraUrl: String = "http://192.168.1.1"
     private var httpStream: HttpStream?
+    private var connection: NWConnection?
+    private var browser: NWBrowser?
+    private var permissionCompletion: ((Bool) -> Void)?
 
     enum RicohThetaError: Error {
         case invalidUrl, badResponse, parseImageProvider, parseCGImage
@@ -82,7 +88,7 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
     }
 
     protocol HttpStreamProtocol: URLSessionDataDelegate {
-        init(request: URLRequest)
+        init(request: URLRequest, plugin: Ricoh360CameraPlugin)
         func startLivePreview(completion: @escaping (UIImage?, Error?) -> Void)
         func stopLivePreview()
     }
@@ -101,13 +107,15 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
         var task: URLSessionTask?
         var isLivePreviewing: Bool = false
         var imageCompletion: ((UIImage?, Error?) -> Void)?
+        weak var plugin: Ricoh360CameraPlugin?
 
         deinit {
             self.stopLivePreview()
         }
 
-        required init(request: URLRequest) {
+        required init(request: URLRequest, plugin: Ricoh360CameraPlugin) {
             self.request = request
+            self.plugin = plugin
             super.init()
         }
 
@@ -122,11 +130,19 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
                 let config = URLSessionConfiguration.default
                 config.timeoutIntervalForRequest = 5
                 config.waitsForConnectivity = true
-                let session = URLSession(configuration: config, delegate: self, delegateQueue: OperationQueue.main)
-
-                self.task = session.dataTask(with: self.request)
-                self.task?.resume()
-                self.isLivePreviewing = true
+                
+                plugin?.requestLocalNetworkPermission { [weak self] granted in
+                    guard let self = self else { return }
+                    
+                    if granted {
+                        let session = URLSession(configuration: config, delegate: self, delegateQueue: OperationQueue.main)
+                        self.task = session.dataTask(with: self.request)
+                        self.task?.resume()
+                        self.isLivePreviewing = true
+                    } else {
+                        self.imageCompletion?(nil, HttpStreamError.badResponse)
+                    }
+                }
             }
         }
 
@@ -187,20 +203,27 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
         }
 
         let infoUrl = "\(cameraUrl)/osc/info"
-        AF.request(infoUrl).validate().responseData { response in
-            switch response.result {
-            case .success(let data):
-                do {
-                    if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                        call.resolve(["session": "Initialized", "info": json])
-                    } else {
+        
+        requestLocalNetworkPermission { [weak self] granted in
+            if granted {
+                AF.request(infoUrl).validate().responseData { response in
+                    switch response.result {
+                    case .success(let data):
+                        do {
+                            if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                                call.resolve(["session": "Initialized", "info": json])
+                            } else {
+                                call.reject("Camera is not reachable or info could not be retrieved")
+                            }
+                        } catch {
+                            call.reject("Camera is not reachable or info could not be retrieved")
+                        }
+                    case .failure(let error):
                         call.reject("Camera is not reachable or info could not be retrieved")
                     }
-                } catch {
-                    call.reject("Camera is not reachable or info could not be retrieved")
                 }
-            case .failure(let error):
-                call.reject("Camera is not reachable or info could not be retrieved")
+            } else {
+                call.reject("Permission not granted")
             }
         }
     }
@@ -208,23 +231,36 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
     @objc func livePreview(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             if self.previewView == nil {
-                self.previewView = UIImageView(frame: self.bridge?.viewController?.view.bounds ?? CGRect.zero)
-                self.previewView?.backgroundColor = .clear
-                self.previewView?.contentMode = .scaleAspectFit
                 let displayInFront = call.getBool("displayInFront") ?? true
-
+                let cropPreview = call.getBool("cropPreview") ?? false
+                
+                // Create preview view with zero frame initially
+                self.previewView = UIImageView(frame: .zero)
+                self.previewView?.backgroundColor = .clear
+                self.previewView?.contentMode = cropPreview ? .scaleAspectFill : .scaleAspectFit
+                self.previewView?.clipsToBounds = cropPreview // Only clip bounds if cropping
+                
                 // Make webview transparent
                 self.webView?.isOpaque = false
                 self.webView?.backgroundColor = UIColor.clear
                 self.webView?.scrollView.backgroundColor = UIColor.clear
                 
-                if displayInFront {
-                    self.bridge?.viewController?.view.addSubview(self.previewView!)
-                } else {
-                    self.webView?.superview?.addSubview(self.previewView!)
-                    if !displayInFront {
+                if let previewView = self.previewView {
+                    if displayInFront {
+                        self.bridge?.viewController?.view.addSubview(previewView)
+                    } else {
+                        self.webView?.superview?.addSubview(previewView)
                         self.webView?.superview?.bringSubviewToFront(self.webView!)
                     }
+                    
+                    // Make preview view fill parent
+                    previewView.translatesAutoresizingMaskIntoConstraints = false
+                    NSLayoutConstraint.activate([
+                        previewView.topAnchor.constraint(equalTo: previewView.superview!.topAnchor),
+                        previewView.bottomAnchor.constraint(equalTo: previewView.superview!.bottomAnchor),
+                        previewView.leadingAnchor.constraint(equalTo: previewView.superview!.leadingAnchor),
+                        previewView.trailingAnchor.constraint(equalTo: previewView.superview!.trailingAnchor)
+                    ])
                 }
             }
 
@@ -232,7 +268,7 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
 
-            self.httpStream = HttpStream(request: request)
+            self.httpStream = HttpStream(request: request, plugin: self)
             self.httpStream?.startLivePreview { [weak self] (image: UIImage?, error: Error?) in
                 guard let self = self else { return }
                 if let image = image {
@@ -262,19 +298,13 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
 
     @objc func capturePicture(_ call: CAPPluginCall) {
         let parameters: [String: Any] = ["name": "camera.takePicture"]
-        let captureUrl = "\(cameraUrl)/osc/commands/execute"
-        print("Capturing picture with URL: \(captureUrl)")
-        
-        AF.request(captureUrl, method: .post, parameters: parameters, encoding: JSONEncoding.default).responseDecodable(of: CommandResponse.self) { response in
-            switch response.result {
-            case .success(let value):
-                print("Picture captured: \(value)")
-                call.resolve(["picture": value])
-            case .failure(let error):
-                print("Failed to capture picture: \(error.localizedDescription)")
-                call.reject("Failed to take picture", error.localizedDescription)
-            }
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: parameters),
+              let jsonInputString = String(data: jsonData, encoding: .utf8) else {
+            call.reject("Failed to serialize parameters")
+            return
         }
+        
+        sendCommandRaw(endpoint: "/osc/commands/execute", payload: jsonInputString, call: call)
     }
 
     @objc func readSettings(_ call: CAPPluginCall) {
@@ -289,52 +319,7 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
         {"name": "camera.getOptions", "parameters": {"optionNames": \(options)}}
         """
         
-        guard let url = URL(string: cameraUrl + "/osc/commands/execute") else {
-            call.reject("Invalid URL")
-            return
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpBody = jsonInputString.data(using: .utf8)
-        
-        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
-            if let error = error {
-                call.reject("Failed to read settings", error.localizedDescription)
-                return
-            }
-            
-            guard let httpResponse = response as? HTTPURLResponse,
-                  let data = data else {
-                call.reject("Failed to read settings")
-                return
-            }
-            
-            if httpResponse.statusCode == 200 {
-                do {
-                    let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-                    if let results = json?["results"] as? [String: Any],
-                       let options = results["options"] as? [String: Any],
-                       let optionsData = try? JSONSerialization.data(withJSONObject: options),
-                       let optionsString = String(data: optionsData, encoding: .utf8) {
-                        call.resolve(["settings": optionsString])
-                    } else {
-                        call.reject("Failed to parse settings response")
-                    }
-                } catch {
-                    call.reject("Failed to parse settings response", error.localizedDescription)
-                }
-            } else {
-                if let error = String(data: data, encoding: .utf8) {
-                    call.reject("Failed to read settings: \(error)")
-                } else {
-                    call.reject("Failed to read settings")
-                }
-            }
-        }
-        task.resume()
+        sendCommandRaw(endpoint: "/osc/commands/execute", payload: jsonInputString, call: call)
     }
 
     @objc func setSettings(_ call: CAPPluginCall) {
@@ -349,44 +334,7 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
         {"name": "camera.setOptions", "parameters": {"options": \(options)}}
         """
         
-        guard let url = URL(string: cameraUrl + "/osc/commands/execute") else {
-            call.reject("Invalid URL")
-            return
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpBody = jsonInputString.data(using: .utf8)
-        
-        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
-            if let error = error {
-                call.reject("Failed to set settings", error.localizedDescription)
-                return
-            }
-            
-            guard let httpResponse = response as? HTTPURLResponse,
-                  let data = data else {
-                call.reject("Failed to set settings")
-                return
-            }
-            
-            if httpResponse.statusCode == 200 {
-                if let result = String(data: data, encoding: .utf8) {
-                    call.resolve(["settings": result])
-                } else {
-                    call.reject("Failed to parse settings response")
-                }
-            } else {
-                if let error = String(data: data, encoding: .utf8) {
-                    call.reject("Failed to set settings: \(error)")
-                } else {
-                    call.reject("Failed to set settings")
-                }
-            }
-        }
-        task.resume()
+        sendCommandRaw(endpoint: "/osc/commands/execute", payload: jsonInputString, call: call)
     }
 
     @objc func sendCommand(_ call: CAPPluginCall) {
@@ -398,45 +346,228 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
             return
         }
         
+        sendCommandRaw(endpoint: endpoint, payload: payload, call: call)
+    }
+
+    private func sendCommandRaw(endpoint: String, payload: String, call: CAPPluginCall) {
         guard let url = URL(string: cameraUrl + endpoint) else {
             call.reject("Invalid URL")
             return
         }
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpBody = payload.data(using: .utf8)
-        
-        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
-            if let error = error {
-                call.reject("Command failed", error.localizedDescription)
-                return
-            }
-            
-            guard let httpResponse = response as? HTTPURLResponse,
-                  let data = data else {
-                call.reject("Command failed")
-                return
-            }
-            
-            if httpResponse.statusCode == 200 {
-                if let result = String(data: data, encoding: .utf8),
-                   let jsonData = result.data(using: .utf8),
-                   let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
-                    call.resolve(json)
-                } else {
-                    call.reject("Failed to parse command response")
+        requestLocalNetworkPermission { [weak self] granted in
+            print("Permission flow completed with result: \(granted)")
+            if granted {
+                print("Proceeding with socket connection")
+                var request = URLRequest(url: url)
+                request.httpMethod = "POST"
+                request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+                request.setValue("application/json", forHTTPHeaderField: "Accept")
+                request.httpBody = payload.data(using: .utf8)
+                
+                let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+                    if let error = error {
+                        call.reject("Command failed", error.localizedDescription)
+                        return
+                    }
+                    
+                    guard let httpResponse = response as? HTTPURLResponse,
+                          let data = data else {
+                        call.reject("Command failed")
+                        return
+                    }
+                    
+                    if httpResponse.statusCode == 200 {
+                        if let result = String(data: data, encoding: .utf8),
+                           let jsonData = result.data(using: .utf8),
+                           let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
+                            call.resolve(json)
+                        } else {
+                            call.reject("Failed to parse command response")
+                        }
+                    } else {
+                        if let error = String(data: data, encoding: .utf8) {
+                            call.reject("Command failed: \(error)")
+                        } else {
+                            call.reject("Command failed")
+                        }
+                    }
                 }
+                task.resume()
             } else {
-                if let error = String(data: data, encoding: .utf8) {
-                    call.reject("Command failed: \(error)")
-                } else {
-                    call.reject("Command failed")
-                }
+                print("Permission not granted")
+                call.reject("Permission not granted")
             }
         }
-        task.resume()
+    }
+
+    private func requestLocalNetworkPermission(completion: @escaping (Bool) -> Void) {
+        self.permissionCompletion = completion
+        
+        // Use Bonjour browsing to trigger local network permission
+        let parameters = NWParameters()
+        parameters.includePeerToPeer = true
+        
+        // Browse for all services
+        let browser = NWBrowser(for: .bonjour(type: "_http._tcp", domain: nil), using: parameters)
+        self.browser = browser
+        
+        browser.stateUpdateHandler = { [weak self] state in
+            switch state {
+            case .ready:
+                print("Browser is ready")
+                self?.permissionCompletion?(true)
+                self?.browser?.cancel()
+            case .failed(let error):
+                print("Browser failed: \(error)")
+                if let error = error as? NWError {
+                    switch error {
+                    case .dns(let dnsError):
+                        print("DNS error: \(dnsError)")
+                    case .posix(let code):
+                        print("POSIX error: \(code)")
+                    default:
+                        print("Other error: \(error)")
+                    }
+                }
+                self?.permissionCompletion?(false)
+                self?.browser?.cancel()
+            case .cancelled:
+                print("Browser was cancelled")
+            case .waiting(let error):
+                print("Browser is waiting: \(error)")
+            default:
+                break
+            }
+        }
+        
+        browser.browseResultsChangedHandler = { results, changes in
+            print("Found \(results.count) services")
+            for result in results {
+                print("Service: \(result.endpoint)")
+            }
+        }
+        
+        print("Starting network service browser")
+        browser.start(queue: .main)
+        
+        // Set a timeout
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            if self?.browser != nil {
+                print("Browser timeout - proceeding anyway")
+                self?.permissionCompletion?(true)
+                self?.browser?.cancel()
+            }
+        }
+    }
+
+    @objc func getCameraAsset(_ call: CAPPluginCall) {
+        guard let assetUrl = call.getString("url") else {
+            call.reject("URL is required")
+            return
+        }
+        
+        let saveToFile = call.getBool("saveToFile", false)
+        
+        guard let url = URL(string: assetUrl) else {
+            call.reject("Invalid URL")
+            return
+        }
+        
+        requestLocalNetworkPermission { [weak self] granted in
+            guard let self = self else { return }
+            
+            if granted {
+                let task = URLSession.shared.dataTask(with: url) { [weak self] (data, response, error) in
+                    guard let self = self else { return }
+                    
+                    if let error = error {
+                        call.reject("Failed to fetch asset: \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    guard let httpResponse = response as? HTTPURLResponse,
+                          let data = data else {
+                        call.reject("Failed to fetch asset")
+                        return
+                    }
+                    
+                    var result = JSObject()
+                    result["statusCode"] = httpResponse.statusCode
+                    
+                    if saveToFile {
+                        let timestamp = Int(Date().timeIntervalSince1970 * 1000)
+                        let filename = "ricoh_\(timestamp).jpg"
+                        let tempDir = FileManager.default.temporaryDirectory
+                        let fileURL = tempDir.appendingPathComponent(filename)
+                        
+                        do {
+                            try data.write(to: fileURL)
+                            result["filePath"] = fileURL.path
+                            call.resolve(result)
+                        } catch {
+                            call.reject("Failed to save file: \(error.localizedDescription)")
+                        }
+                    } else {
+                        // Downsize and convert to base64
+                        if let downsizedData = self.downSizeImage(data) {
+                            let base64String = downsizedData.base64EncodedString()
+                            result["data"] = base64String
+                            call.resolve(result)
+                        } else {
+                            call.reject("Failed to process image")
+                        }
+                    }
+                }
+                task.resume()
+            } else {
+                call.reject("Permission not granted")
+            }
+        }
+    }
+    
+    private func downSizeImage(_ imageData: Data) -> Data? {
+        let maxWidth: CGFloat = 2048 // Must be equal to or less than 4096
+        
+        guard let image = UIImage(data: imageData) else { return nil }
+        let originalWidth = image.size.width
+        
+        if originalWidth > maxWidth {
+            let scaleFactor = maxWidth / originalWidth
+            let newSize = CGSize(width: originalWidth * scaleFactor, height: image.size.height * scaleFactor)
+            
+            UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+            guard let resizedImage = UIGraphicsGetImageFromCurrentImageContext() else {
+                UIGraphicsEndImageContext()
+                return nil
+            }
+            UIGraphicsEndImageContext()
+            
+            return resizedImage.jpegData(compressionQuality: 1.0)
+        }
+        
+        return imageData
+    }
+
+    @objc func listFiles(_ call: CAPPluginCall) {
+        var parameters = JSObject()
+        parameters["fileType"] = call.getString("fileType", "all")
+        parameters["startPosition"] = call.getInt("startPosition", 0)
+        parameters["entryCount"] = call.getInt("entryCount", 100)
+        parameters["maxThumbSize"] = call.getInt("maxThumbSize", 0)
+        parameters["_detail"] = call.getBool("_detail", true)
+        
+        var payload = JSObject()
+        payload["name"] = "camera.listFiles"
+        payload["parameters"] = parameters
+        
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: payload),
+              let jsonInputString = String(data: jsonData, encoding: .utf8) else {
+            call.reject("Failed to serialize parameters")
+            return
+        }
+        
+        sendCommandRaw(endpoint: "/osc/commands/execute", payload: jsonInputString, call: call)
     }
 }

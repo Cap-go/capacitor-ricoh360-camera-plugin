@@ -2,6 +2,43 @@ export interface InitializeOptions {
   url: string
 }
 
+export interface GetCameraAssetOptions {
+  url: string;
+  saveToFile?: boolean;
+}
+
+export interface GetCameraAssetResponse {
+  statusCode: number;
+  data: string;  // base64 encoded data
+  filePath?: string;
+}
+
+export interface ListFilesOptions {
+  fileType?: 'all' | 'image' | 'video';
+  startPosition?: number;
+  entryCount?: number;
+  maxThumbSize?: number;
+  _detail?: boolean;
+}
+
+export interface ListFilesResponse {
+  results: {
+    entries: Array<{
+      name: string;
+      fileUrl: string;
+      size: number;
+      dateTimeZone: string;
+      width?: number;
+      height?: number;
+      previewUrl?: string;
+      _projectionType?: string;
+      isProcessed?: boolean;
+      _thumbSize?: number;
+    }>;
+    totalEntries: number;
+  };
+}
+
 export interface PictureCaptureOptions {
   // Define any specific options needed for capturing a picture
   fileFormat?: 'jpeg' | 'raw';
@@ -19,6 +56,7 @@ export interface VideoCaptureOptions {
 
 export interface LivePreviewOptions {
   displayInFront?: boolean;
+  cropPreview?: boolean
 }
 
 export interface CameraInfo {
@@ -56,6 +94,20 @@ export interface Ricoh360CameraPlugin {
    * Initializes the SDK with camera URL
    */
   initialize(options: InitializeOptions): Promise<CommandResponse>
+
+  /**
+   * Retrieves a camera asset from a URL and returns it as base64
+   * @param options Object containing the URL to fetch the asset from
+   * @returns Promise with the status code and base64-encoded data
+   */
+  getCameraAsset(options: GetCameraAssetOptions): Promise<GetCameraAssetResponse>
+
+  /**
+   * Lists files stored on the camera
+   * @param options Optional parameters to filter and paginate results
+   * @returns Promise with the list of files and their metadata
+   */
+  listFiles(options?: ListFilesOptions): Promise<ListFilesResponse>
 
   /**
    * Captures a picture
