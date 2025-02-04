@@ -14,13 +14,15 @@ npx cap sync
 <docgen-index>
 
 * [`initialize(...)`](#initialize)
-* [`capturePicture(...)`](#capturepicture)
+* [`capturePicture()`](#capturepicture)
 * [`captureVideo(...)`](#capturevideo)
 * [`livePreview(...)`](#livepreview)
 * [`stopLivePreview()`](#stoplivepreview)
-* [`readSettings()`](#readsettings)
+* [`readSettings(...)`](#readsettings)
 * [`setSettings(...)`](#setsettings)
+* [`sendCommand(...)`](#sendcommand)
 * [Interfaces](#interfaces)
+* [Type Aliases](#type-aliases)
 
 </docgen-index>
 
@@ -30,31 +32,27 @@ npx cap sync
 ### initialize(...)
 
 ```typescript
-initialize(options: InitializeOptions) => Promise<CameraInfo>
+initialize(options: InitializeOptions) => Promise<CommandResponse>
 ```
 
-Initializes the SDK
+Initializes the SDK with camera URL
 
 | Param         | Type                                                            |
 | ------------- | --------------------------------------------------------------- |
 | **`options`** | <code><a href="#initializeoptions">InitializeOptions</a></code> |
 
-**Returns:** <code>Promise&lt;<a href="#camerainfo">CameraInfo</a>&gt;</code>
+**Returns:** <code>Promise&lt;<a href="#commandresponse">CommandResponse</a>&gt;</code>
 
 --------------------
 
 
-### capturePicture(...)
+### capturePicture()
 
 ```typescript
-capturePicture(options: PictureCaptureOptions) => Promise<CommandResponse>
+capturePicture() => Promise<CommandResponse>
 ```
 
 Captures a picture
-
-| Param         | Type                                                                    |
-| ------------- | ----------------------------------------------------------------------- |
-| **`options`** | <code><a href="#picturecaptureoptions">PictureCaptureOptions</a></code> |
 
 **Returns:** <code>Promise&lt;<a href="#commandresponse">CommandResponse</a>&gt;</code>
 
@@ -81,7 +79,7 @@ Captures a video
 ### livePreview(...)
 
 ```typescript
-livePreview(options: LivePreviewOptions) => Promise<void>
+livePreview(options: LivePreviewOptions) => Promise<CommandResponse>
 ```
 
 Starts live preview
@@ -90,27 +88,35 @@ Starts live preview
 | ------------- | ----------------------------------------------------------------- |
 | **`options`** | <code><a href="#livepreviewoptions">LivePreviewOptions</a></code> |
 
+**Returns:** <code>Promise&lt;<a href="#commandresponse">CommandResponse</a>&gt;</code>
+
 --------------------
 
 
 ### stopLivePreview()
 
 ```typescript
-stopLivePreview() => Promise<void>
+stopLivePreview() => Promise<CommandResponse>
 ```
 
 Stops live preview
 
+**Returns:** <code>Promise&lt;<a href="#commandresponse">CommandResponse</a>&gt;</code>
+
 --------------------
 
 
-### readSettings()
+### readSettings(...)
 
 ```typescript
-readSettings() => Promise<CommandResponse>
+readSettings(options: { options: string[]; }) => Promise<CommandResponse>
 ```
 
 Reads camera settings
+
+| Param         | Type                                | Description                               |
+| ------------- | ----------------------------------- | ----------------------------------------- |
+| **`options`** | <code>{ options: string[]; }</code> | Array of option names to read from camera |
 
 **Returns:** <code>Promise&lt;<a href="#commandresponse">CommandResponse</a>&gt;</code>
 
@@ -120,14 +126,31 @@ Reads camera settings
 ### setSettings(...)
 
 ```typescript
-setSettings(options: any) => Promise<CommandResponse>
+setSettings(options: { options: Record<string, any>; }) => Promise<CommandResponse>
 ```
 
 Sets camera settings
 
-| Param         | Type             |
-| ------------- | ---------------- |
-| **`options`** | <code>any</code> |
+| Param         | Type                                                                       | Description                              |
+| ------------- | -------------------------------------------------------------------------- | ---------------------------------------- |
+| **`options`** | <code>{ options: <a href="#record">Record</a>&lt;string, any&gt;; }</code> | Object containing camera settings to set |
+
+**Returns:** <code>Promise&lt;<a href="#commandresponse">CommandResponse</a>&gt;</code>
+
+--------------------
+
+
+### sendCommand(...)
+
+```typescript
+sendCommand(options: { endpoint: string; payload: Record<string, any>; }) => Promise<CommandResponse>
+```
+
+Send raw command to camera
+
+| Param         | Type                                                                                         |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| **`options`** | <code>{ endpoint: string; payload: <a href="#record">Record</a>&lt;string, any&gt;; }</code> |
 
 **Returns:** <code>Promise&lt;<a href="#commandresponse">CommandResponse</a>&gt;</code>
 
@@ -137,52 +160,22 @@ Sets camera settings
 ### Interfaces
 
 
-#### CameraInfo
+#### CommandResponse
 
-| Prop                  | Type                                                        |
-| --------------------- | ----------------------------------------------------------- |
-| **`manufacturer`**    | <code>string</code>                                         |
-| **`model`**           | <code>string</code>                                         |
-| **`serialNumber`**    | <code>string</code>                                         |
-| **`firmwareVersion`** | <code>string</code>                                         |
-| **`supportUrl`**      | <code>string</code>                                         |
-| **`gps`**             | <code>boolean</code>                                        |
-| **`gyro`**            | <code>boolean</code>                                        |
-| **`uptime`**          | <code>number</code>                                         |
-| **`api`**             | <code>string[]</code>                                       |
-| **`endpoints`**       | <code>{ httpPort: number; httpUpdatesPort: number; }</code> |
-| **`apiLevel`**        | <code>number[]</code>                                       |
+| Prop           | Type                |
+| -------------- | ------------------- |
+| **`session`**  | <code>string</code> |
+| **`info`**     | <code>string</code> |
+| **`preview`**  | <code>string</code> |
+| **`picture`**  | <code>string</code> |
+| **`settings`** | <code>string</code> |
 
 
 #### InitializeOptions
 
-| Prop               | Type                                                                                          |
-| ------------------ | --------------------------------------------------------------------------------------------- |
-| **`cameraUrl`**    | <code>string</code>                                                                           |
-| **`language`**     | <code>'en-US' \| 'en-GB' \| 'ja' \| 'fr' \| 'de' \| 'zh-TW' \| 'zh-CN' \| 'it' \| 'ko'</code> |
-| **`setDateTime`**  | <code>boolean</code>                                                                          |
-| **`sleepDelay`**   | <code>number</code>                                                                           |
-| **`shutterSound`** | <code>number</code>                                                                           |
-
-
-#### CommandResponse
-
-| Prop          | Type                                            |
-| ------------- | ----------------------------------------------- |
-| **`name`**    | <code>string</code>                             |
-| **`state`**   | <code>string</code>                             |
-| **`results`** | <code>any</code>                                |
-| **`error`**   | <code>{ code: string; message: string; }</code> |
-
-
-#### PictureCaptureOptions
-
-| Prop                  | Type                         |
-| --------------------- | ---------------------------- |
-| **`fileFormat`**      | <code>'jpeg' \| 'raw'</code> |
-| **`exposureProgram`** | <code>number</code>          |
-| **`iso`**             | <code>number</code>          |
-| **`shutterSpeed`**    | <code>number</code>          |
+| Prop      | Type                |
+| --------- | ------------------- |
+| **`url`** | <code>string</code> |
 
 
 #### VideoCaptureOptions
@@ -199,5 +192,15 @@ Sets camera settings
 | Prop                 | Type                 |
 | -------------------- | -------------------- |
 | **`displayInFront`** | <code>boolean</code> |
+
+
+### Type Aliases
+
+
+#### Record
+
+Construct a type with a set of properties K of type T
+
+<code>{ [P in K]: T; }</code>
 
 </docgen-api>
