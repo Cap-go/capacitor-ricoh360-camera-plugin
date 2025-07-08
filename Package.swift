@@ -3,14 +3,14 @@ import PackageDescription
 
 let package = Package(
     name: "Ricoh360Camera",
-    platforms: [.iOS(.v13)],
+    platforms: [.iOS(.v14)],
     products: [
         .library(
             name: "Ricoh360Camera",
             targets: ["Ricoh360CameraPlugin"])
     ],
     dependencies: [
-        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", branch: "main"),
+        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "7.0.0"),
         .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.10.2")
     ],
     targets: [
