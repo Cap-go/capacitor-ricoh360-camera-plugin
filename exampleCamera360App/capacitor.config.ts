@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'exampleCamera360App',
+  appId: 'app.capgo.ricoh360.camera.plugin',
+  appName: 'Ricoh360 Camera Example',
   webDir: 'dist',
   // server: {
   //   url: 'http://localhost:8100',

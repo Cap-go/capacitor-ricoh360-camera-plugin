@@ -1,6 +1,6 @@
 {
-  "appId": "com.example.plugin",
-  "appName": "example-app",
+  "appId": "app.capgo.ricoh360.camera.plugin",
+  "appName": "Ricoh360 Camera Example",
   "webDir": "dist",
   "plugins": {
     "SplashScreen": {
