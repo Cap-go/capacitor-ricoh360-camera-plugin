@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'app.capgo.ricoh360.camera.plugin',
-  appName: 'Ricoh360 Camera Example',
+  appName: 'Ricoh360 Camera Plugin Example',
   webDir: 'dist',
   // server: {
   //   url: 'http://localhost:8100',

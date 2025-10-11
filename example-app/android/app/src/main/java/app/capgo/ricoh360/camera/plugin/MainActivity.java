@@ -1,4 +1,4 @@
-package com.example.plugin;
+package app.capgo.ricoh360.camera.plugin;
 
 import com.getcapacitor.BridgeActivity;
 

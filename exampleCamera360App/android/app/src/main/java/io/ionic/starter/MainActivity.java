@@ -1,4 +1,4 @@
-package io.ionic.starter;
+package app.capgo.ricoh360.camera.plugin;
 
 import com.getcapacitor.BridgeActivity;
 
