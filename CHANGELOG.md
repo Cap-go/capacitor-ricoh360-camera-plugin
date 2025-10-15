@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [7.1.9](https://github.com/Cap-go/ricoh360-camera-plugin/compare/7.1.8...7.1.9) (2025-10-15)
+
+
+### Bug Fixes
+
+* lint config ([140282e](https://github.com/Cap-go/ricoh360-camera-plugin/commit/140282ea93fe49f9c72baca95f7283c4460d6393))
+
 ## [7.1.8](https://github.com/Cap-go/ricoh360-camera-plugin/compare/7.1.7...7.1.8) (2025-10-14)
 
 ## [7.1.7](https://github.com/Cap-go/ricoh360-camera-plugin/compare/7.1.6...7.1.7) (2025-10-11)
