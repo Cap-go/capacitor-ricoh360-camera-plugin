@@ -1,31 +1,28 @@
 package java.ee.forgr.capacitor.ricoh.camera;
 
-import java.io.OutputStream;
-import java.io.InputStream;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.ByteArrayOutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
-import android.util.Base64;
-import android.widget.ImageView;
-import android.widget.FrameLayout;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.util.Base64;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
-
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.stream.Collectors;
-import java.util.Arrays;
 
 @CapacitorPlugin(name = "Ricoh360Camera")
 public class Ricoh360CameraPlugin extends Plugin {
@@ -34,8 +31,8 @@ public class Ricoh360CameraPlugin extends Plugin {
     private ImageView previewView;
     private Thread streamThread;
     private boolean isStreaming = false;
-    private final byte[] startMarker = new byte[]{(byte) 0xFF, (byte) 0xD8};
-    private final byte[] endMarker = new byte[]{(byte) 0xFF, (byte) 0xD9};
+    private final byte[] startMarker = new byte[] { (byte) 0xFF, (byte) 0xD8 };
+    private final byte[] endMarker = new byte[] { (byte) 0xFF, (byte) 0xD9 };
     private final int containerViewId = 20;
     private FrameLayout containerView;
 
@@ -55,8 +52,7 @@ public class Ricoh360CameraPlugin extends Plugin {
                 int responseCode = connection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     InputStream inputStream = connection.getInputStream();
-                    String result = new BufferedReader(new InputStreamReader(inputStream))
-                        .lines().collect(Collectors.joining("\n"));
+                    String result = new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining("\n"));
                     call.resolve(new JSObject().put("session", "Initialized").put("info", result));
                 } else {
                     call.reject("Camera is not reachable or info could not be retrieved");
@@ -64,7 +60,8 @@ public class Ricoh360CameraPlugin extends Plugin {
             } catch (Exception e) {
                 call.reject("Camera is not reachable or info could not be retrieved", e);
             }
-        }).start();
+        })
+            .start();
     }
 
     @PluginMethod
@@ -78,8 +75,8 @@ public class Ricoh360CameraPlugin extends Plugin {
                 containerView = new FrameLayout(getActivity().getApplicationContext());
                 containerView.setId(containerViewId);
                 FrameLayout.LayoutParams containerParams = new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
                 );
                 containerView.setLayoutParams(containerParams);
 
@@ -87,17 +84,11 @@ public class Ricoh360CameraPlugin extends Plugin {
                     previewView = new ImageView(getContext());
                     FrameLayout.LayoutParams params;
                     if (cropPreview) {
-                        params = new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        );
+                        params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
                         params.gravity = android.view.Gravity.FILL;
                         previewView.setAdjustViewBounds(true);
                     } else {
-                        params = new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT
-                        );
+                        params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                         params.gravity = android.view.Gravity.CENTER;
                     }
                     previewView.setLayoutParams(params);
@@ -108,7 +99,7 @@ public class Ricoh360CameraPlugin extends Plugin {
                 // Make webview transparent
                 getBridge().getWebView().setBackgroundColor(Color.TRANSPARENT);
                 ((ViewGroup) getBridge().getWebView().getParent()).addView(containerView);
-                
+
                 if (!displayInFront) {
                     getBridge().getWebView().getParent().bringChildToFront(getBridge().getWebView());
                 }
@@ -232,7 +223,7 @@ public class Ricoh360CameraPlugin extends Plugin {
             JSObject data = call.getData();
             String assetUrl = data.getString("url");
             boolean saveToFile = call.getBoolean("saveToFile", false);
-            
+
             if (assetUrl == null) {
                 call.reject("URL is required");
                 return;
@@ -245,23 +236,23 @@ public class Ricoh360CameraPlugin extends Plugin {
                     connection.setRequestMethod("GET");
                     connection.setConnectTimeout(10000);
                     connection.setReadTimeout(10000);
-                    
+
                     int responseCode = connection.getResponseCode();
-                    
+
                     InputStream inputStream;
                     if (responseCode >= 400) {
                         inputStream = connection.getErrorStream();
                     } else {
                         inputStream = connection.getInputStream();
                     }
-                    
+
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                     byte[] buffer = new byte[4096];
                     int bytesRead;
                     while ((bytesRead = inputStream.read(buffer)) != -1) {
                         outputStream.write(buffer, 0, bytesRead);
                     }
-                    
+
                     byte[] bytes = outputStream.toByteArray();
                     JSObject result = new JSObject();
                     result.put("statusCode", responseCode);
@@ -282,14 +273,13 @@ public class Ricoh360CameraPlugin extends Plugin {
                         String base64 = android.util.Base64.encodeToString(downSizeImage(bytes), Base64.NO_WRAP);
                         result.put("data", base64);
                     }
-                    
+
                     call.resolve(result);
-                    
                 } catch (Exception e) {
                     call.reject("Failed to fetch asset: " + e.getMessage(), e);
                 }
-            }).start();
-            
+            })
+                .start();
         } catch (Exception e) {
             call.reject("Failed to process request: " + e.getMessage(), e);
         }
@@ -327,7 +317,7 @@ public class Ricoh360CameraPlugin extends Plugin {
             JSObject parameters = new JSObject();
             parameters.put("optionNames", data.getJSONArray("options"));
             payload.put("parameters", parameters);
-            
+
             sendCommandRaw(call, "/osc/commands/execute", payload);
         } catch (Exception e) {
             android.util.Log.e("Ricoh360Camera", "Exception: " + e.getMessage(), e);
@@ -344,7 +334,7 @@ public class Ricoh360CameraPlugin extends Plugin {
             JSObject parameters = new JSObject();
             parameters.put("options", data.getJSObject("options"));
             payload.put("parameters", parameters);
-            
+
             sendCommandRaw(call, "/osc/commands/execute", payload);
         } catch (Exception e) {
             android.util.Log.e("Ricoh360Camera", "Exception: " + e.getMessage(), e);
@@ -365,14 +355,12 @@ public class Ricoh360CameraPlugin extends Plugin {
 
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 InputStream inputStream = connection.getInputStream();
-                String result = new BufferedReader(new InputStreamReader(inputStream))
-                        .lines().collect(Collectors.joining("\n"));
+                String result = new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining("\n"));
                 android.util.Log.d("Ricoh360Camera", "Response body: " + result);
                 call.resolve(new JSObject(result));
             } else {
                 InputStream errorStream = connection.getErrorStream();
-                String error = new BufferedReader(new InputStreamReader(errorStream))
-                        .lines().collect(Collectors.joining("\n"));
+                String error = new BufferedReader(new InputStreamReader(errorStream)).lines().collect(Collectors.joining("\n"));
                 android.util.Log.e("Ricoh360Camera", "Error response: " + error);
                 call.reject("Command failed: " + error);
             }
@@ -419,7 +407,7 @@ public class Ricoh360CameraPlugin extends Plugin {
         final int MAX_WIDTH = 2048; // Must be equal to or less than 4096
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
-        
+
         BitmapFactory.decodeByteArray(image, 0, image.length, options);
         android.util.Log.d("Ricoh360Camera", "JPEG width: " + options.outWidth);
 
@@ -429,15 +417,7 @@ public class Ricoh360CameraPlugin extends Plugin {
             scale.postScale(scaleFactor, scaleFactor);
 
             Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0, image.length);
-            Bitmap resizedBitmap = Bitmap.createBitmap(
-                bitmap, 
-                0, 
-                0, 
-                options.outWidth, 
-                options.outHeight, 
-                scale, 
-                false
-            );
+            Bitmap resizedBitmap = Bitmap.createBitmap(bitmap, 0, 0, options.outWidth, options.outHeight, scale, false);
 
             android.util.Log.d("Ricoh360Camera", "Resized width: " + resizedBitmap.getWidth());
             bitmap.recycle();
@@ -457,4 +437,4 @@ public class Ricoh360CameraPlugin extends Plugin {
         }
         return image;
     }
-} 
+}

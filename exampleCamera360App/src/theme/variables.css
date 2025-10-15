@@ -1,7 +1,0 @@
-/* For information on how to create your own theme, please see:
-http://ionicframework.com/docs/theming/ */
-ion-header.md {
-  ion-toolbar:first-child {
-      padding-top: 27px;
-  }
-}

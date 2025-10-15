@@ -1,6 +1,13 @@
 import { WebPlugin } from '@capacitor/core';
 
-import type { Ricoh360CameraPlugin, CommandResponse, GetCameraAssetOptions, GetCameraAssetResponse, ListFilesOptions, ListFilesResponse } from './definitions';
+import type {
+  Ricoh360CameraPlugin,
+  CommandResponse,
+  GetCameraAssetOptions,
+  GetCameraAssetResponse,
+  ListFilesOptions,
+  ListFilesResponse,
+} from './definitions';
 
 export class Ricoh360CameraWeb extends WebPlugin implements Ricoh360CameraPlugin {
   async initialize(__options: any): Promise<CommandResponse> {

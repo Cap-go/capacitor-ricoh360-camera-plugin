@@ -1,5 +1,5 @@
 export interface InitializeOptions {
-  url: string
+  url: string;
 }
 
 export interface GetCameraAssetOptions {
@@ -9,7 +9,7 @@ export interface GetCameraAssetOptions {
 
 export interface GetCameraAssetResponse {
   statusCode: number;
-  data: string;  // base64 encoded data
+  data: string; // base64 encoded data
   filePath?: string;
 }
 
@@ -23,7 +23,7 @@ export interface ListFilesOptions {
 
 export interface ListFilesResponse {
   results: {
-    entries: Array<{
+    entries: {
       name: string;
       fileUrl: string;
       size: number;
@@ -34,7 +34,7 @@ export interface ListFilesResponse {
       _projectionType?: string;
       isProcessed?: boolean;
       _thumbSize?: number;
-    }>;
+    }[];
     totalEntries: number;
   };
 }
@@ -56,7 +56,7 @@ export interface VideoCaptureOptions {
 
 export interface LivePreviewOptions {
   displayInFront?: boolean;
-  cropPreview?: boolean
+  cropPreview?: boolean;
 }
 
 export interface CameraInfo {
@@ -93,62 +93,62 @@ export interface Ricoh360CameraPlugin {
   /**
    * Initializes the SDK with camera URL
    */
-  initialize(options: InitializeOptions): Promise<CommandResponse>
+  initialize(options: InitializeOptions): Promise<CommandResponse>;
 
   /**
    * Retrieves a camera asset from a URL and returns it as base64
    * @param options Object containing the URL to fetch the asset from
    * @returns Promise with the status code and base64-encoded data
    */
-  getCameraAsset(options: GetCameraAssetOptions): Promise<GetCameraAssetResponse>
+  getCameraAsset(options: GetCameraAssetOptions): Promise<GetCameraAssetResponse>;
 
   /**
    * Lists files stored on the camera
    * @param options Optional parameters to filter and paginate results
    * @returns Promise with the list of files and their metadata
    */
-  listFiles(options?: ListFilesOptions): Promise<ListFilesResponse>
+  listFiles(options?: ListFilesOptions): Promise<ListFilesResponse>;
 
   /**
    * Captures a picture
    */
-  capturePicture(): Promise<CommandResponse>
+  capturePicture(): Promise<CommandResponse>;
 
   /**
    * Captures a video
    */
-  captureVideo(options: VideoCaptureOptions): Promise<CommandResponse>
+  captureVideo(options: VideoCaptureOptions): Promise<CommandResponse>;
 
   /**
    * Starts live preview
    */
-  livePreview(options: LivePreviewOptions): Promise<CommandResponse>
+  livePreview(options: LivePreviewOptions): Promise<CommandResponse>;
 
   /**
    * Stops live preview
    */
-  stopLivePreview(): Promise<CommandResponse>
+  stopLivePreview(): Promise<CommandResponse>;
 
   /**
    * Reads camera settings
    * @param options Array of option names to read from camera
    * @see https://github.com/ricohapi/theta-api-specs/tree/main/theta-web-api-v2.1/options
    */
-  readSettings(options: { options: string[] }): Promise<CommandResponse>
+  readSettings(options: { options: string[] }): Promise<CommandResponse>;
 
   /**
    * Sets camera settings
    * @param options Object containing camera settings to set
    * @see https://github.com/ricohapi/theta-api-specs/tree/main/theta-web-api-v2.1/options
    */
-  setSettings(options: { options: Record<string, any> }): Promise<CommandResponse>
+  setSettings(options: { options: Record<string, any> }): Promise<CommandResponse>;
 
   /**
    * Send raw command to camera
    * @param endpoint API endpoint (e.g. '/osc/commands/execute')
    * @param payload Raw JSON payload
    */
-  sendCommand(options: { endpoint: string; payload: Record<string, any> }): Promise<CommandResponse>
+  sendCommand(options: { endpoint: string; payload: Record<string, any> }): Promise<CommandResponse>;
 }
 
 // interface LivePreviewResult {
