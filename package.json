@@ -1,6 +1,6 @@
 {
   "name": "@capgo/ricoh360",
-  "version": "7.1.10",
+  "version": "7.1.11",
   "description": "Provides an SDK for the Ricoh360 cameras for Capacitor",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
@@ -38,7 +38,6 @@
     "ricoh",
     "capgo"
   ],
-
   "scripts": {
     "verify": "npm run verify:ios && npm run verify:android && npm run verify:web",
     "verify:ios": "xcodebuild -scheme Ricoh360Camera -destination generic/platform=iOS",
