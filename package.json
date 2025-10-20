@@ -13,7 +13,7 @@
     "ios/Sources",
     "ios/Tests",
     "Package.swift",
-    "Ricoh360Camera.podspec"
+    "CapgoRicoh360.podspec"
   ],
   "author": "",
   "license": "AGPL-3.0-or-later",
