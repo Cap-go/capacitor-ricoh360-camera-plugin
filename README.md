@@ -30,6 +30,7 @@ npx cap sync
 * [`readSettings(...)`](#readsettings)
 * [`setSettings(...)`](#setsettings)
 * [`sendCommand(...)`](#sendcommand)
+* [`getPluginVersion()`](#getpluginversion)
 * [Interfaces](#interfaces)
 * [Type Aliases](#type-aliases)
 
@@ -196,6 +197,19 @@ Send raw command to camera
 | **`options`** | <code>{ endpoint: string; payload: <a href="#record">Record</a>&lt;string, any&gt;; }</code> |
 
 **Returns:** <code>Promise&lt;<a href="#commandresponse">CommandResponse</a>&gt;</code>
+
+--------------------
+
+
+### getPluginVersion()
+
+```typescript
+getPluginVersion() => Promise<{ version: string; }>
+```
+
+Get the native Capacitor plugin version
+
+**Returns:** <code>Promise&lt;{ version: string; }&gt;</code>
 
 --------------------
 
