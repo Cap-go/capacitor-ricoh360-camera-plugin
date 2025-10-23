@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [7.2.0](https://github.com/Cap-go/capacitor-ricoh360-camera-plugin/compare/7.1.14...7.2.0) (2025-10-23)
+
+
+### Features
+
+* add getPluginVersion method to Ricoh360Camera plugin and update workflows ([6f52725](https://github.com/Cap-go/capacitor-ricoh360-camera-plugin/commit/6f527259d31ccc41d1a816c936abdb5de00093e9))
+
+
+### Bug Fixes
+
+* remove unnecessary content field from Discord release webhook ([bf9bcce](https://github.com/Cap-go/capacitor-ricoh360-camera-plugin/commit/bf9bccee93d676d636e743dacb82e063544f6da0))
+
 ## [7.1.14](https://github.com/Cap-go/capacitor-ricoh360-camera-plugin/compare/7.1.13...7.1.14) (2025-10-20)
 
 
