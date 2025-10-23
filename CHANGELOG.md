@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [7.2.1](https://github.com/Cap-go/capacitor-ricoh360-camera-plugin/compare/7.2.0...7.2.1) (2025-10-23)
+
+
+### Bug Fixes
+
+* remove footer in discord ([c334430](https://github.com/Cap-go/capacitor-ricoh360-camera-plugin/commit/c334430711f770167009af7aae79cbb5ae177745))
+* update Discord release username to include repository name ([e39217a](https://github.com/Cap-go/capacitor-ricoh360-camera-plugin/commit/e39217a82709a9492efa2b3ca726b43ac0a31c0a))
+
 ## [7.2.0](https://github.com/Cap-go/capacitor-ricoh360-camera-plugin/compare/7.1.14...7.2.0) (2025-10-23)
 
 
