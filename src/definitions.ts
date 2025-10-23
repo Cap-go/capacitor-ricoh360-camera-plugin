@@ -149,6 +149,14 @@ export interface Ricoh360CameraPlugin {
    * @param payload Raw JSON payload
    */
   sendCommand(options: { endpoint: string; payload: Record<string, any> }): Promise<CommandResponse>;
+
+  /**
+   * Get the native Capacitor plugin version
+   *
+   * @returns {Promise<{ id: string }>} an Promise with version for this device
+   * @throws An error if the something went wrong
+   */
+  getPluginVersion(): Promise<{ version: string }>;
 }
 
 // interface LivePreviewResult {

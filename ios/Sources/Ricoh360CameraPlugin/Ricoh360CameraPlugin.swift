@@ -11,6 +11,7 @@ import Network
  */
 @objc(Ricoh360CameraPlugin)
 public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDelegate {
+    private let PLUGIN_VERSION: String = ""
     public let identifier = "Ricoh360CameraPlugin"
     public let jsName = "Ricoh360Camera"
     public let pluginMethods: [CAPPluginMethod] = [
@@ -23,7 +24,8 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
         CAPPluginMethod(name: "captureVideo", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "sendCommand", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getCameraAsset", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "listFiles", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "listFiles", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getPluginVersion", returnType: CAPPluginReturnPromise)
     ]
 
     private var previewView: UIImageView?
@@ -570,4 +572,9 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
 
         sendCommandRaw(endpoint: "/osc/commands/execute", payload: jsonInputString, call: call)
     }
+
+    @objc func getPluginVersion(_ call: CAPPluginCall) {
+        call.resolve(["version": self.PLUGIN_VERSION])
+    }
+
 }

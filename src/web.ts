@@ -49,4 +49,8 @@ export class Ricoh360CameraWeb extends WebPlugin implements Ricoh360CameraPlugin
   async sendCommand(_options: any): Promise<CommandResponse> {
     throw new Error('Web implementation not available for sendCommand.');
   }
+
+  async getPluginVersion(): Promise<{ version: string }> {
+    return { version: 'web' };
+  }
 }
