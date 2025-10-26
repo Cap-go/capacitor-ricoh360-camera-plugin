@@ -9,6 +9,10 @@
 
 Provides an SDK for the Ricoh360 cameras for Capacitor
 
+## Documentation
+
+The most complete doc is available here: https://capgo.app/docs/plugins/ricoh360-camera-plugin/
+
 ## Install
 
 ```bash
