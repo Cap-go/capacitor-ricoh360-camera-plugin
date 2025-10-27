@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [7.2.4](https://github.com/Cap-go/capacitor-ricoh360-camera-plugin/compare/7.2.3...7.2.4) (2025-10-27)
+
+
+### Bug Fixes
+
+* renovate capacitor dep ([62c668c](https://github.com/Cap-go/capacitor-ricoh360-camera-plugin/commit/62c668cf1040d319d6c4a67fc5e5b9254a722483))
+
 ## [7.2.3](https://github.com/Cap-go/capacitor-ricoh360-camera-plugin/compare/7.2.2...7.2.3) (2025-10-26)
 
 
