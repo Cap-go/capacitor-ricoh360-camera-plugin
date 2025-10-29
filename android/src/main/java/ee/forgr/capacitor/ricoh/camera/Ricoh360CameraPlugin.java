@@ -27,7 +27,7 @@ import org.json.JSONObject;
 @CapacitorPlugin(name = "Ricoh360Camera")
 public class Ricoh360CameraPlugin extends Plugin {
 
-    private final String PLUGIN_VERSION = "";
+    private final String PLUGIN_VERSION = "7.2.5";
 
     private String cameraUrl = "http://192.168.1.1";
     private ImageView previewView;
