@@ -11,7 +11,7 @@ import Network
  */
 @objc(Ricoh360CameraPlugin)
 public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDelegate {
-    private let PLUGIN_VERSION: String = "7.2.4"
+    private let PLUGIN_VERSION: String = "7.2.5"
     public let identifier = "Ricoh360CameraPlugin"
     public let jsName = "Ricoh360Camera"
     public let pluginMethods: [CAPPluginMethod] = [
