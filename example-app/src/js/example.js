@@ -1,4 +1,4 @@
-import { Ricoh360Camera } from 'ricoh360-camera';
+import { Ricoh360Camera } from '@capgo/ricoh360';
 
 async function openCamera() {
     const ip = document.getElementById("ipInput").value
@@ -123,4 +123,3 @@ window.readSettings = readSettings
 window.readFiles = listPhotos
 window.setSettings = setSettings
 window.sendCommand = sendCommand
-

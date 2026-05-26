@@ -17,7 +17,7 @@
     "@capacitor/core": "^8.0.0",
     "@capacitor/ios": "^8.0.0",
     "@capacitor/splash-screen": "^8.0.0",
-    "ricoh360-camera": "file:.."
+    "@capgo/ricoh360": "file:.."
   },
   "devDependencies": {
     "@capacitor/cli": "^8.0.0",
