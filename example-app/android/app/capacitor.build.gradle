@@ -10,7 +10,7 @@ android {
 apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
 dependencies {
     implementation project(':capacitor-splash-screen')
-    implementation project(':ricoh360-camera')
+    implementation project(':capgo-capacitor-ricoh360')
 
 }
 
