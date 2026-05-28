@@ -2,11 +2,11 @@
 import PackageDescription
 
 let package = Package(
-    name: "CapgoRicoh360",
+    name: "CapgoCapacitorRicoh360CameraPlugin",
     platforms: [.iOS(.v15)],
     products: [
         .library(
-            name: "CapgoRicoh360",
+            name: "CapgoCapacitorRicoh360CameraPlugin",
             targets: ["Ricoh360CameraPlugin"])
     ],
     dependencies: [

@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "@capgo/ricoh360",
+      "name": "@capgo/capacitor-ricoh360-camera-plugin",
       "devDependencies": {
         "@capacitor/android": "^8.0.0",
         "@capacitor/core": "^8.0.0",

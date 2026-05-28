@@ -1,4 +1,4 @@
-import { Ricoh360Camera } from '@capgo/ricoh360';
+import { Ricoh360Camera } from '@capgo/capacitor-ricoh360-camera-plugin';
 
 async function openCamera() {
     const ip = document.getElementById("ipInput").value

@@ -5,6 +5,8 @@ import AVKit
 import UIKit
 import Network
 
+// swiftlint:disable type_body_length
+
 /**
  * Please read the Capacitor iOS Plugin Development Guide
  * here: https://capacitorjs.com/docs/plugins/ios
