@@ -5,14 +5,12 @@ import AVKit
 import UIKit
 import Network
 
-// swiftlint:disable type_body_length
-
 /**
  * Please read the Capacitor iOS Plugin Development Guide
  * here: https://capacitorjs.com/docs/plugins/ios
  */
 @objc(Ricoh360CameraPlugin)
-public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDelegate {
+public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDelegate { // swiftlint:disable:this type_body_length
     private let pluginVersion: String = "8.0.11"
     public let identifier = "Ricoh360CameraPlugin"
     public let jsName = "Ricoh360Camera"
