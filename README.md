@@ -1,4 +1,4 @@
-# @capgo/capacitor-ricoh360-camera-plugin
+# @capgo/capacitor-ricoh360
 
 <a href="https://capgo.app/"><img src="https://capgo.app/readme-banner.svg?repo=Cap-go/capacitor-ricoh360-camera-plugin" alt="Capgo - Instant updates for Capacitor" /></a>
 
@@ -27,7 +27,7 @@ The most complete doc is available here: https://capgo.app/docs/plugins/ricoh360
 ## Install
 
 ```bash
-npm install @capgo/capacitor-ricoh360-camera-plugin
+npm install @capgo/capacitor-ricoh360
 npx cap sync
 ```
 

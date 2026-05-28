@@ -13,7 +13,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "8.0.0"),
         .package(name: "CapacitorSplashScreen", path: "../../../node_modules/.bun/@capacitor+splash-screen@8.0.0+15e98482558ccfe6/node_modules/@capacitor/splash-screen"),
-        .package(name: "CapgoCapacitorRicoh360CameraPlugin", path: "../../../node_modules/.bun/@capgo+capacitor-ricoh360-camera-plugin@file+../node_modules/@capgo/capacitor-ricoh360-camera-plugin")
+        .package(name: "CapgoCapacitorRicoh360", path: "../../../node_modules/.bun/@capgo+capacitor-ricoh360@file+../node_modules/@capgo/capacitor-ricoh360")
     ],
     targets: [
         .target(
@@ -22,7 +22,7 @@ let package = Package(
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "Cordova", package: "capacitor-swift-pm"),
                 .product(name: "CapacitorSplashScreen", package: "CapacitorSplashScreen"),
-                .product(name: "CapgoCapacitorRicoh360CameraPlugin", package: "CapgoCapacitorRicoh360CameraPlugin")
+                .product(name: "CapgoCapacitorRicoh360", package: "CapgoCapacitorRicoh360")
             ]
         )
     ]
