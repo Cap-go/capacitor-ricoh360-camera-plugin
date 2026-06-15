@@ -1,3 +1,5 @@
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
+import { Capacitor } from '@capacitor/core';
 import { Ricoh360Camera } from '@capgo/capacitor-ricoh360';
 
 async function openCamera() {
@@ -123,3 +125,9 @@ window.readSettings = readSettings
 window.readFiles = listPhotos
 window.setSettings = setSettings
 window.sendCommand = sendCommand
+
+if (Capacitor.isNativePlatform()) {
+  CapacitorUpdater.notifyAppReady().catch((error) => {
+    console.error('Capgo notifyAppReady failed', error);
+  });
+}
