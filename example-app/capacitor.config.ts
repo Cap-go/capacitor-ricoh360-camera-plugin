@@ -4,7 +4,7 @@ import pkg from './package.json';
 
 const config: CapacitorConfig = {
   appId: 'app.capgo.ricoh360.camera.plugin',
-  appName: 'Ricoh360 Camera Plugin Example',
+  appName: '@capgo/capacitor-ricoh360',
   webDir: 'dist',
   plugins: {
     SplashScreen: {
