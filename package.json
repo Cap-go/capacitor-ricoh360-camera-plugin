@@ -1,6 +1,6 @@
 {
   "name": "@capgo/capacitor-ricoh360",
-  "version": "8.0.18",
+  "version": "8.0.19",
   "description": "Provides an SDK for the Ricoh360 cameras for Capacitor",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
