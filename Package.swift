@@ -10,16 +10,14 @@ let package = Package(
             targets: ["Ricoh360CameraPlugin"])
     ],
     dependencies: [
-        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "8.0.0"),
-        .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.10.2")
+        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "8.0.0")
     ],
     targets: [
         .target(
             name: "Ricoh360CameraPlugin",
             dependencies: [
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
-                .product(name: "Cordova", package: "capacitor-swift-pm"),
-                "Alamofire"
+                .product(name: "Cordova", package: "capacitor-swift-pm")
             ],
             path: "ios/Sources/Ricoh360CameraPlugin"),
         .testTarget(
