@@ -1,6 +1,5 @@
 import Foundation
 import Capacitor
-import Alamofire
 import AVKit
 import UIKit
 import Network
@@ -208,22 +207,38 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
 
         requestLocalNetworkPermission { [weak self] granted in
             if granted {
-                AF.request(infoUrl).validate().responseData { response in
-                    switch response.result {
-                    case .success(let data):
-                        do {
-                            if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                                call.resolve(["session": "Initialized", "info": json])
-                            } else {
-                                call.reject("Camera is not reachable or info could not be retrieved")
-                            }
-                        } catch {
+                guard let url = URL(string: infoUrl) else {
+                    call.reject("Camera is not reachable or info could not be retrieved")
+                    return
+                }
+                var request = URLRequest(url: url)
+                request.httpMethod = "GET"
+                request.timeoutInterval = 60
+
+                let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                    if error != nil {
+                        call.reject("Camera is not reachable or info could not be retrieved")
+                        return
+                    }
+
+                    guard let httpResponse = response as? HTTPURLResponse,
+                          (200...299).contains(httpResponse.statusCode),
+                          let data = data else {
+                        call.reject("Camera is not reachable or info could not be retrieved")
+                        return
+                    }
+
+                    do {
+                        if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                            call.resolve(["session": "Initialized", "info": json])
+                        } else {
                             call.reject("Camera is not reachable or info could not be retrieved")
                         }
-                    case .failure(let error):
+                    } catch {
                         call.reject("Camera is not reachable or info could not be retrieved")
                     }
                 }
+                task.resume()
             } else {
                 call.reject("Permission not granted")
             }
