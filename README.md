@@ -1,13 +1,28 @@
 # @capgo/capacitor-ricoh360
 
-<a href="https://capgo.app/"><img src="https://capgo.app/readme-banner.svg?repo=Cap-go/capacitor-ricoh360-camera-plugin" alt="Capgo - Instant updates for Capacitor" /></a>
+Control Ricoh 360 cameras from your Capacitor app: live preview, photo and video capture, settings and file access.
+
+<a href="https://capgo.app/?ref=plugin_ricoh360_camera_plugin"><img src="https://capgo.app/readme-banner.svg?repo=Cap-go/capacitor-ricoh360-camera-plugin" alt="Capgo - Instant updates for Capacitor" /></a>
 
 <div align="center">
-  <h2><a href="https://capgo.app/?ref=plugin_ricoh360_camera_plugin"> ➡️ Get Instant updates for your App with Capgo</a></h2>
-  <h2><a href="https://capgo.app/consulting/?ref=plugin_ricoh360_camera_plugin"> Missing a feature? We’ll build the plugin for you 💪</a></h2>
+  <p><b>Capgo</b>: open-source live updates for Ionic and Capacitor apps. Ship OTA fixes and features instantly, without waiting for app store review.</p>
+  <h2><a href="https://capgo.app/register/?ref=plugin_ricoh360_camera_plugin">➡️ Get started for free</a></h2>
+  <p>14-day unlimited free trial. No credit card required</p>
+  <p><a href="https://capgo.app/consulting/?ref=plugin_ricoh360_camera_plugin">Missing a feature? We'll build the plugin for you 💪</a></p>
 </div>
 
-Provides an SDK for the Ricoh360 cameras for Capacitor
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Cap-go/capacitor-ricoh360-camera-plugin/main/assets/github-social-preview.png" alt="@capgo/capacitor-ricoh360 for Capacitor apps" width="300" />
+</p>
+
+## Key features
+
+- **Connect**: `initialize()` with the camera URL.
+- **Capture**: `capturePicture()` and `captureVideo()`.
+- **Live preview**: `livePreview()` and `stopLivePreview()`.
+- **Files**: `listFiles()` and `getCameraAsset()` read media stored on the camera.
+- **Settings and commands**: `readSettings()`, `setSettings()` and `sendCommand()` for raw camera API calls.
+- **Platforms**: iOS and Android. Not available on web.
 
 ## Documentation
 
