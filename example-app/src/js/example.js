@@ -15,6 +15,8 @@ const cameraPreview = $('cameraPreview');
 
 let connected = false;
 let previewActive = false;
+let connecting = false;
+let connectGeneration = 0;
 
 function setChip(el, label, state) {
   el.textContent = label;
@@ -65,8 +67,17 @@ function setPreviewImage(url) {
   $('assetUrl').value = url;
 }
 
+function dismissPreviewUi() {
+  previewActive = false;
+  cameraPreview.style.display = 'none';
+  cameraPreview.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('preview-mode');
+  setChip(chipPreview, 'Preview off', 'idle');
+}
+
 function updateConnectionUi() {
-  $('btn-disconnect').disabled = !connected;
+  $('btn-connect').disabled = connecting || connected;
+  $('btn-disconnect').disabled = !connected && !connecting;
   $('btn-live-preview').disabled = !connected || previewActive;
   $('btn-stop-preview').disabled = !previewActive;
   $('btn-capture-picture').disabled = !connected;
@@ -79,27 +90,52 @@ function updateConnectionUi() {
 }
 
 async function connect() {
+  const generation = ++connectGeneration;
+  connecting = true;
   setChip(chipConnection, 'Connecting...', 'warn');
+  updateConnectionUi();
   try {
     const result = await Ricoh360Camera.initialize({ url: cameraUrl() });
+    if (generation !== connectGeneration) {
+      return;
+    }
     connected = true;
     setChip(chipConnection, `Connected (${$('ipInput').value})`, 'ok');
     appendLog('initialize', result);
   } catch (error) {
+    if (generation !== connectGeneration) {
+      return;
+    }
     connected = false;
     setChip(chipConnection, 'Connection failed', 'err');
     appendLog('initialize error', error.message ?? String(error));
+  } finally {
+    if (generation === connectGeneration) {
+      connecting = false;
+      updateConnectionUi();
+    }
   }
-  updateConnectionUi();
 }
 
 async function disconnect() {
-  try {
-    if (previewActive) {
-      await stopLivePreview();
+  connectGeneration += 1;
+  if (connecting) {
+    connecting = false;
+    connected = false;
+    setChip(chipConnection, 'Disconnected', 'idle');
+    appendLog('disconnect', 'Canceled in-flight connection.');
+    updateConnectionUi();
+    return;
+  }
+  if (previewActive) {
+    try {
+      await stopLivePreview({ throwOnError: true });
+    } catch (error) {
+      setChip(chipConnection, 'Preview still active', 'warn');
+      appendLog('disconnect blocked', error.message ?? String(error));
+      updateConnectionUi();
+      return;
     }
-  } catch (error) {
-    appendLog('stopLivePreview on disconnect', error.message ?? String(error));
   }
   connected = false;
   setChip(chipConnection, 'Disconnected', 'idle');
@@ -148,6 +184,7 @@ async function startLivePreview() {
     previewActive = true;
     cameraPreview.style.display = 'block';
     cameraPreview.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('preview-mode');
     setChip(chipPreview, 'Preview on', 'ok');
     appendLog('livePreview', { displayInFront: false, cropPreview: false });
   } catch (error) {
@@ -156,18 +193,28 @@ async function startLivePreview() {
   updateConnectionUi();
 }
 
-async function stopLivePreview() {
+async function stopLivePreview(options = {}) {
+  const { throwOnError = false, forceUi = false } = options;
   try {
     await Ricoh360Camera.stopLivePreview();
-    previewActive = false;
-    cameraPreview.style.display = 'none';
-    cameraPreview.setAttribute('aria-hidden', 'true');
-    setChip(chipPreview, 'Preview off', 'idle');
+    dismissPreviewUi();
     appendLog('stopLivePreview', { status: 'stopped' });
+    updateConnectionUi();
+    return true;
   } catch (error) {
     appendLog('stopLivePreview error', error.message ?? String(error));
+    if (forceUi) {
+      dismissPreviewUi();
+      appendLog('stopLivePreview', 'Toolbar hidden in the WebView. Retry stop if preview persists on device.');
+      updateConnectionUi();
+      return false;
+    }
+    if (throwOnError) {
+      throw error;
+    }
+    updateConnectionUi();
+    return false;
   }
-  updateConnectionUi();
 }
 
 async function listFiles() {
@@ -259,7 +306,12 @@ $('btn-set-settings').addEventListener('click', setSettings);
 $('btn-send-command').addEventListener('click', sendCommand);
 $('btn-clear-log').addEventListener('click', clearLog);
 $('btn-overlay-capture').addEventListener('click', capturePicture);
-$('btn-overlay-close').addEventListener('click', stopLivePreview);
+$('btn-overlay-close').addEventListener('click', async () => {
+  const stopped = await stopLivePreview();
+  if (!stopped) {
+    await stopLivePreview({ forceUi: true });
+  }
+});
 
 lastPicture.addEventListener('error', () => {
   showPreviewPlaceholder('Could not load preview from the camera URL.');

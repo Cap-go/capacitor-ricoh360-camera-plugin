@@ -23,8 +23,8 @@ body {
   --border: rgba(148, 163, 184, 0.35);
   --ink: #0f172a;
   --muted: #64748b;
-  --accent: #6366f1;
-  --accent-alt: #22d3ee;
+  --accent: #4338ca;
+  --accent-alt: #2563eb;
   --success: #16a34a;
   --warning: #d97706;
   --danger: #dc2626;
@@ -269,6 +269,10 @@ button:not(:disabled):hover {
   display: block;
 }
 
+.preview-frame img[hidden] {
+  display: none;
+}
+
 .preview-placeholder {
   color: var(--muted);
   font-size: 0.85rem;
@@ -276,12 +280,25 @@ button:not(:disabled):hover {
   text-align: center;
 }
 
+body.preview-mode {
+  background: transparent;
+}
+
+body.preview-mode .app {
+  visibility: hidden;
+}
+
 #cameraPreview {
   position: fixed;
   inset: 0;
   z-index: 100;
   display: none;
-  background: #000;
+  background: transparent;
+  pointer-events: none;
+}
+
+#cameraPreview .preview-toolbar {
+  pointer-events: auto;
 }
 
 #cameraPreview .preview-toolbar {
