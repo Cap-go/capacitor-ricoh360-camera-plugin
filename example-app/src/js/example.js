@@ -41,13 +41,27 @@ function parseJsonField(id, fallback) {
   return JSON.parse(raw);
 }
 
+function showPreviewPlaceholder(message) {
+  lastPicture.hidden = true;
+  lastPicture.removeAttribute('src');
+  previewPlaceholder.hidden = false;
+  if (message) {
+    previewPlaceholder.textContent = message;
+  }
+}
+
 function setPreviewImage(url) {
   if (!url) {
     return;
   }
+  lastPicture.onerror = () => {
+    showPreviewPlaceholder('Could not load preview from the camera URL.');
+  };
+  lastPicture.onload = () => {
+    lastPicture.hidden = false;
+    previewPlaceholder.hidden = true;
+  };
   lastPicture.src = url;
-  lastPicture.hidden = false;
-  previewPlaceholder.hidden = true;
   $('assetUrl').value = url;
 }
 
@@ -189,9 +203,7 @@ async function getCameraAsset() {
       filePath: result.filePath,
     });
     if (result.data) {
-      lastPicture.src = `data:image/jpeg;base64,${result.data}`;
-      lastPicture.hidden = false;
-      previewPlaceholder.hidden = true;
+      setPreviewImage(`data:image/jpeg;base64,${result.data}`);
     }
   } catch (error) {
     appendLog('getCameraAsset error', error.message ?? String(error));
@@ -248,6 +260,10 @@ $('btn-send-command').addEventListener('click', sendCommand);
 $('btn-clear-log').addEventListener('click', clearLog);
 $('btn-overlay-capture').addEventListener('click', capturePicture);
 $('btn-overlay-close').addEventListener('click', stopLivePreview);
+
+lastPicture.addEventListener('error', () => {
+  showPreviewPlaceholder('Could not load preview from the camera URL.');
+});
 
 updateConnectionUi();
 getPluginVersion();
