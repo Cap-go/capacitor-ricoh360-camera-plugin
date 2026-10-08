@@ -1,6 +1,6 @@
 # @capgo/capacitor-ricoh360
 
-Control Ricoh 360 cameras from your Capacitor app: live preview, photo and video capture, settings and file access.
+Control Ricoh 360 cameras from your Capacitor app: live preview, photo capture, settings and file access.
 
 <a href="https://capgo.app/?ref=plugin_ricoh360_camera_plugin"><img src="https://capgo.app/readme-banner.svg?repo=Cap-go/capacitor-ricoh360-camera-plugin" alt="Capgo - Instant updates for Capacitor" /></a>
 
@@ -18,7 +18,7 @@ Control Ricoh 360 cameras from your Capacitor app: live preview, photo and video
 ## Key features
 
 - **Connect**: `initialize()` with the camera URL.
-- **Capture**: `capturePicture()` and `captureVideo()`.
+- **Capture**: `capturePicture()` takes a photo.
 - **Live preview**: `livePreview()` and `stopLivePreview()`.
 - **Files**: `listFiles()` and `getCameraAsset()` read media stored on the camera.
 - **Settings and commands**: `readSettings()`, `setSettings()` and `sendCommand()` for raw camera API calls.
