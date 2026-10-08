@@ -1,0 +1,335 @@
+/* Capgo Ricoh360 example app */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+body {
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  margin: 0;
+  min-height: 100vh;
+}
+
+:root {
+  color-scheme: light dark;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --bg: #f4f6fb;
+  --bg-accent: rgba(34, 211, 238, 0.18);
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --border: rgba(148, 163, 184, 0.35);
+  --ink: #0f172a;
+  --muted: #64748b;
+  --accent: #4338ca;
+  --accent-alt: #2563eb;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --shadow: 0 24px 48px rgba(15, 23, 42, 0.12);
+  --radius: 16px;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1220;
+    --bg-accent: rgba(99, 102, 241, 0.22);
+    --surface: #111827;
+    --surface-muted: #1e293b;
+    --border: rgba(148, 163, 184, 0.22);
+    --ink: #f8fafc;
+    --muted: #94a3b8;
+    --shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+  }
+}
+
+body {
+  background:
+    radial-gradient(circle at top right, var(--bg-accent), transparent 55%),
+    var(--bg);
+  color: var(--ink);
+  padding: 1rem;
+}
+
+.app {
+  width: min(720px, 100%);
+  margin: 0 auto 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.brand-header img {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.25);
+}
+
+.brand-header h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.brand-header .eyebrow {
+  margin: 0 0 0.15rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.notice {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+.chip::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.chip[data-state='ok']::before {
+  background: var(--success);
+}
+
+.chip[data-state='warn']::before {
+  background: var(--warning);
+}
+
+.chip[data-state='err']::before {
+  background: var(--danger);
+}
+
+.chip[data-state='idle']::before {
+  background: var(--muted);
+}
+
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.65rem;
+}
+
+.field-row label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 4.5rem;
+}
+
+input[type='text'],
+input[type='number'],
+textarea,
+select {
+  flex: 1 1 12rem;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+textarea {
+  min-height: 4.5rem;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  resize: vertical;
+}
+
+.action-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+button {
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  background: linear-gradient(120deg, var(--accent-alt), var(--accent));
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.22);
+}
+
+button.secondary {
+  background: var(--surface-muted);
+  color: var(--ink);
+  box-shadow: none;
+  border: 1px solid var(--border);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.35);
+  box-shadow: none;
+}
+
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+}
+
+.output-panel {
+  margin: 0;
+  min-height: 120px;
+  max-height: 240px;
+  overflow: auto;
+  padding: 0.85rem;
+  border-radius: 12px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.preview-frame {
+  margin-top: 0.75rem;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px dashed var(--border);
+  background: var(--surface-muted);
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-frame img {
+  max-width: 100%;
+  max-height: 220px;
+  display: block;
+}
+
+.preview-frame img[hidden] {
+  display: none;
+}
+
+.preview-placeholder {
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+body.preview-mode {
+  background: transparent;
+}
+
+body.preview-mode .app {
+  visibility: hidden;
+}
+
+#cameraPreview {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  background: transparent;
+  pointer-events: none;
+}
+
+#cameraPreview .preview-toolbar {
+  pointer-events: auto;
+}
+
+#cameraPreview .preview-toolbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+}
+
+#cameraPreview .preview-toolbar button {
+  flex: 1 1 8rem;
+  max-width: 12rem;
+}
+
+@media (max-width: 420px) {
+  body {
+    padding: 0.65rem;
+  }
+
+  .brand-header h1 {
+    font-size: 1.15rem;
+  }
+
+  button {
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+}

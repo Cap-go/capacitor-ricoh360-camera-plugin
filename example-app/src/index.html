@@ -1,133 +1,136 @@
 <!doctype html>
-<html lang="en" dir="ltr" class="hydrated">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
-    
     <meta
       name="viewport"
       content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <meta name="format-detection" content="telephone=no" />
     <meta name="msapplication-tap-highlight" content="no" />
-<title>@capgo/capacitor-ricoh360</title>
-
-<style>
-      html {
-        -webkit-text-size-adjust: 100%;
-        text-size-adjust: 100%;
-        touch-action: manipulation;
-        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-      }
-      body {
-        overscroll-behavior: none;
-        -webkit-tap-highlight-color: transparent;
-      }
-
-      html, body {
-        margin: 0;
-        padding: 0;
-        background: transparent !important;
-        font-family: Avenir, Helvetica, Arial, sans-serif;
-        height: 100%;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-      #app {
-        text-align: center;
-        color: #2c3e50;
-      }
-      #cameraPreview {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        display: none;
-      }
-      .button-container {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        grid-gap: 10px;
-        padding: 20px;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: rgba(0,0,0,0.5);
-      }
-      .camera-button {
-        padding: 10px;
-        font-size: 16px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        user-select: none;
-      }
-      .camera-button:hover {
-        background-color: #45a049;
-      }
-      .camera-button:active {
-        background-color: #3e8e41;
-      }
-      #mainContent {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin: 20px;
-      }
-      .setup {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        justify-content: center;
-        flex-wrap: wrap;
-      }
-      #lastPicture {
-        max-width: 100%;
-        max-height: 50vh;
-        margin-top: 20px;
-      }
-      .settings-container {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        margin-top: 20px;
-      }
-      .settings-value {
-        font-family: monospace;
-        background: #f5f5f5;
-        padding: 10px;
-        border-radius: 4px;
-        margin-top: 10px;
-        white-space: pre-wrap;
-        word-break: break-all;
-      }
-    </style>
+    <title>@capgo/capacitor-ricoh360</title>
+    <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
-    <div id="app">
-      <div id="mainContent">
-        <h1>Ricoh360 Camera</h1>
-        <div class="setup">
-          <label for="ipInput">Camera IP:</label>
-          <input type="text" id="ipInput" name="ipInput" value="192.168.1.1" />
-          <button class="camera-button" onclick="openCamera()">Open Camera</button>
-          <button class="camera-button" onclick="readSettings()">Read Settings</button>
-          <button class="camera-button" onclick="setSettings()">Set Settings</button>
-          <button class="camera-button" onclick="sendCommand()">Send Command</button>
-          <button class="camera-button" onclick="readFiles()">read photos</button>
+    <div class="app" id="app">
+      <header class="brand-header">
+        <img src="../assets/capgo-icon.png" width="48" height="48" alt="Capgo" />
+        <div>
+          <p class="eyebrow">Capgo plugin example</p>
+          <h1>RICOH THETA camera demo</h1>
         </div>
-        <div class="settings-value" id="settingsValue"></div>
-        <img id="lastPicture" />
-      </div>
+      </header>
 
-      <div id="cameraPreview">
-        <div class="button-container">
-          <button class="camera-button" onclick="takePicture()">Take Picture</button>
-          <button class="camera-button" onclick="closeCamera()">Close Camera</button>
+      <p class="notice">
+        Connect a RICOH THETA camera on the same Wi-Fi as this device. The default camera IP is
+        <strong>192.168.1.1</strong>. Native iOS and Android builds are required for camera commands; the web build
+        shows UI and plugin errors in the log below.
+      </p>
+
+      <section class="card" aria-labelledby="connection-heading">
+        <h2 id="connection-heading">Connection</h2>
+        <div class="chip-row">
+          <span class="chip" id="chip-connection" data-state="idle">Disconnected</span>
+          <span class="chip" id="chip-preview" data-state="idle">Preview off</span>
+          <span class="chip" id="chip-version" data-state="idle">Version: unknown</span>
         </div>
+        <div class="field-row">
+          <label for="ipInput">Camera IP</label>
+          <input type="text" id="ipInput" name="ipInput" value="192.168.1.1" autocomplete="off" inputmode="decimal" />
+        </div>
+        <div class="action-grid">
+          <button type="button" id="btn-connect" class="primary">Connect</button>
+          <button type="button" id="btn-disconnect" class="secondary" disabled>Disconnect</button>
+          <button type="button" id="btn-plugin-version" class="secondary">Get plugin version</button>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="capture-heading">
+        <h2 id="capture-heading">Capture</h2>
+        <div class="field-row">
+          <label for="videoResolution">Video</label>
+          <select id="videoResolution">
+            <option value="4K">4K</option>
+            <option value="2K">2K</option>
+          </select>
+          <input type="number" id="videoFrameRate" value="30" min="1" max="60" aria-label="Frame rate" />
+        </div>
+        <div class="action-grid">
+          <button type="button" id="btn-capture-picture">Capture picture</button>
+          <button type="button" id="btn-capture-video">Capture video</button>
+          <button type="button" id="btn-live-preview">Start live preview</button>
+          <button type="button" id="btn-stop-preview" class="secondary" disabled>Stop live preview</button>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="media-heading">
+        <h2 id="media-heading">Media</h2>
+        <div class="field-row">
+          <label for="assetUrl">Asset URL</label>
+          <input
+            type="text"
+            id="assetUrl"
+            placeholder="fileUrl from listFiles (optional)"
+            autocomplete="off"
+          />
+        </div>
+        <div class="action-grid">
+          <button type="button" id="btn-list-files">List files</button>
+          <button type="button" id="btn-get-asset" class="secondary">Get camera asset</button>
+        </div>
+        <div class="preview-frame" id="previewFrame">
+          <span class="preview-placeholder" id="previewPlaceholder">Last capture preview appears here.</span>
+          <img id="lastPicture" alt="Last capture" hidden />
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="settings-heading">
+        <h2 id="settings-heading">Settings</h2>
+        <div class="field-row" style="flex-direction: column; align-items: stretch">
+          <label for="readOptions">Read options (JSON array)</label>
+          <textarea id="readOptions" rows="3">["iso","shutterSpeed","whiteBalance","exposureProgram","fileFormat"]</textarea>
+        </div>
+        <div class="field-row" style="flex-direction: column; align-items: stretch">
+          <label for="setOptions">Set options (JSON object)</label>
+          <textarea id="setOptions" rows="3">{"iso":200}</textarea>
+        </div>
+        <div class="action-grid">
+          <button type="button" id="btn-read-settings">Read settings</button>
+          <button type="button" id="btn-set-settings" class="secondary">Set settings</button>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="advanced-heading">
+        <h2 id="advanced-heading">Raw command</h2>
+        <div class="field-row" style="flex-direction: column; align-items: stretch">
+          <label for="commandEndpoint">Endpoint</label>
+          <input type="text" id="commandEndpoint" value="/osc/commands/execute" />
+        </div>
+        <div class="field-row" style="flex-direction: column; align-items: stretch">
+          <label for="commandPayload">Payload (JSON)</label>
+          <textarea id="commandPayload" rows="5">{
+  "name": "camera.getOptions",
+  "parameters": {
+    "optionNames": ["shutterSpeed", "iso"]
+  }
+}</textarea>
+        </div>
+        <div class="action-grid">
+          <button type="button" id="btn-send-command">Send command</button>
+          <button type="button" id="btn-clear-log" class="secondary">Clear log</button>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="output-heading">
+        <h2 id="output-heading">Output log</h2>
+        <pre class="output-panel" id="outputLog">Ready. Tap Connect on a device with a THETA on the same network.</pre>
+      </section>
+    </div>
+
+    <div id="cameraPreview" aria-hidden="true">
+      <div class="preview-toolbar">
+        <button type="button" id="btn-overlay-capture">Capture picture</button>
+        <button type="button" id="btn-overlay-close" class="secondary">Close preview</button>
       </div>
     </div>
 
