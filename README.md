@@ -8,7 +8,6 @@ Control Ricoh 360 cameras from your Capacitor app: live preview, photo capture, 
   <p><b>Capgo</b>: push fixes to your Capacitor users in minutes, build signed iOS and Android apps without a Mac, and roll back in one click.</p>
   <h2><a href="https://capgo.app/register/?ref=plugin_ricoh360_camera_plugin">➡️ Get started for free</a></h2>
   <p>14-day unlimited free trial. No credit card required</p>
-  <p><a href="https://capgo.app/consulting/?ref=plugin_ricoh360_camera_plugin">Missing a feature? We'll build the plugin for you 💪</a></p>
 </div>
 
 > 🤖 **Building with an AI coding agent?** Install [Capgo skills](https://capgo.app/skills/?ref=plugin_ricoh360_camera_plugin) so Claude Code, Codex, Cursor, Copilot, or Gemini CLI know how to install and use `@capgo/capacitor-ricoh360` in your Capacitor app: `npx skills add Cap-go/capgo-skills`. Then ask your agent: *"Add @capgo/capacitor-ricoh360 to my Capacitor app and wire it up."* [Agent setup guides](https://capgo.app/agents/?ref=plugin_ricoh360_camera_plugin) · [Hosted MCP](https://capgo.app/docs/ai/mcp/?ref=plugin_ricoh360_camera_plugin)
@@ -340,6 +339,8 @@ Get the native Capacitor plugin version
 
 Construct a type with a set of properties K of type T
 
-<code>{ [P in K]: T; }</code>
+<code>{
+ [P in K]: T;
+ }</code>
 
 </docgen-api>
