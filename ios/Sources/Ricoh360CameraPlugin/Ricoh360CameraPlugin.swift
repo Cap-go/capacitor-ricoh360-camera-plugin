@@ -205,7 +205,7 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
 
         let infoUrl = "\(cameraUrl)/osc/info"
 
-        requestLocalNetworkPermission { [weak self] granted in
+        requestLocalNetworkPermission { granted in
             if granted {
                 guard let url = URL(string: infoUrl) else {
                     call.reject("Camera is not reachable or info could not be retrieved")
@@ -246,7 +246,8 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
     }
 
     @objc func livePreview(_ call: CAPPluginCall) {
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
             if self.previewView == nil {
                 let displayInFront = call.getBool("displayInFront") ?? true
                 let cropPreview = call.getBool("cropPreview") ?? false
@@ -372,7 +373,7 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
             return
         }
 
-        requestLocalNetworkPermission { [weak self] granted in
+        requestLocalNetworkPermission { granted in
             print("Permission flow completed with result: \(granted)")
             if granted {
                 print("Proceeding with socket connection")
@@ -437,15 +438,13 @@ public class Ricoh360CameraPlugin: CAPPlugin, CAPBridgedPlugin, URLSessionDataDe
                 self?.browser?.cancel()
             case .failed(let error):
                 print("Browser failed: \(error)")
-                if let error = error as? NWError {
-                    switch error {
-                    case .dns(let dnsError):
-                        print("DNS error: \(dnsError)")
-                    case .posix(let code):
-                        print("POSIX error: \(code)")
-                    default:
-                        print("Other error: \(error)")
-                    }
+                switch error {
+                case .dns(let dnsError):
+                    print("DNS error: \(dnsError)")
+                case .posix(let code):
+                    print("POSIX error: \(code)")
+                default:
+                    print("Other error: \(error)")
                 }
                 self?.permissionCompletion?(false)
                 self?.browser?.cancel()
